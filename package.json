@@ -1,6 +1,6 @@
 {
   "name": "@a24z/logo-component",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Animated wireframe sphere logo component",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
