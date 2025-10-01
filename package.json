@@ -1,0 +1,30 @@
+{
+  "name": "@a24z/logo-component",
+  "version": "0.1.0",
+  "description": "Animated wireframe sphere logo component",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && tsc --module esnext --outDir dist/esm",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "react",
+    "logo",
+    "component",
+    "svg",
+    "animated"
+  ],
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.12",
+    "react": "^19.1.1",
+    "typescript": "^5"
+  }
+}
