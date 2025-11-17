@@ -52,30 +52,30 @@ export const Logo: React.FC<LogoProps> = ({
       {/* These appear first in SVG order, so they render behind the lines */}
 
       {/* Horizontal ellipses - back portions */}
-      <circle r="2.5" fill={finalParticleColor} cx="33" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="1s" path="M 33,100 A 67,27 0 0,0 167,100 A 67,27 0 0,0 33,100" />
+      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="1s" path="M 0,0 A 67,27 0 1,0 -134,0 A 67,27 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="1s" repeatCount="indefinite" />
       </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="33" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="2s" path="M 33,100 A 67,40 0 0,0 167,100 A 67,40 0 0,0 33,100" />
+      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="2s" path="M 0,0 A 67,40 0 1,0 -134,0 A 67,40 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="2s" repeatCount="indefinite" />
       </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="33" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="3s" path="M 33,100 A 67,53 0 0,0 167,100 A 67,53 0 0,0 33,100" />
+      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="3s" path="M 0,0 A 67,53 0 1,0 -134,0 A 67,53 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="3s" repeatCount="indefinite" />
       </circle>
 
       {/* Vertical ellipses - back portions */}
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="33" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="1.5s" path="M 100,33 A 27,67 0 0,0 100,167 A 27,67 0 0,0 100,33" />
+      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="1.5s" path="M 0,0 A 27,67 0 1,0 0,-134 A 27,67 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="1.5s" repeatCount="indefinite" />
       </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="33" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="2.5s" path="M 100,33 A 40,67 0 0,0 100,167 A 40,67 0 0,0 100,33" />
+      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="2.5s" path="M 0,0 A 40,67 0 1,0 0,-134 A 40,67 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="2.5s" repeatCount="indefinite" />
       </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="33" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="3.5s" path="M 100,33 A 53,67 0 0,0 100,167 A 53,67 0 0,0 100,33" />
+      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="3.5s" path="M 0,0 A 53,67 0 1,0 0,-134 A 53,67 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="3.5s" repeatCount="indefinite" />
       </circle>
 
@@ -330,30 +330,30 @@ export const Logo: React.FC<LogoProps> = ({
       {/* These appear last in SVG order, so they render on top of the lines */}
 
       {/* Horizontal ellipses - front portions */}
-      <circle r="2.5" fill={finalParticleColor} cx="33" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="1s" path="M 33,100 A 67,27 0 0,0 167,100 A 67,27 0 0,0 33,100" />
+      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="1s" path="M 0,0 A 67,27 0 1,0 -134,0 A 67,27 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="1s" repeatCount="indefinite" />
       </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="33" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="2s" path="M 33,100 A 67,40 0 0,0 167,100 A 67,40 0 0,0 33,100" />
+      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="2s" path="M 0,0 A 67,40 0 1,0 -134,0 A 67,40 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="2s" repeatCount="indefinite" />
       </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="33" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="3s" path="M 33,100 A 67,53 0 0,0 167,100 A 67,53 0 0,0 33,100" />
+      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="3s" path="M 0,0 A 67,53 0 1,0 -134,0 A 67,53 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="3s" repeatCount="indefinite" />
       </circle>
 
       {/* Vertical ellipses - front portions */}
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="33" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="1.5s" path="M 100,33 A 27,67 0 0,0 100,167 A 27,67 0 0,0 100,33" />
+      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="1.5s" path="M 0,0 A 27,67 0 1,0 0,-134 A 27,67 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="1.5s" repeatCount="indefinite" />
       </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="33" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="2.5s" path="M 100,33 A 40,67 0 0,0 100,167 A 40,67 0 0,0 100,33" />
+      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="2.5s" path="M 0,0 A 40,67 0 1,0 0,-134 A 40,67 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="2.5s" repeatCount="indefinite" />
       </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="33" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="3.5s" path="M 100,33 A 53,67 0 0,0 100,167 A 53,67 0 0,0 100,33" />
+      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
+        <animateMotion dur="8s" repeatCount="indefinite" begin="3.5s" path="M 0,0 A 53,67 0 1,0 0,-134 A 53,67 0 1,0 0,0" />
         <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="3.5s" repeatCount="indefinite" />
       </circle>
     </svg>
