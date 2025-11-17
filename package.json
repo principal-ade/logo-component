@@ -1,5 +1,5 @@
 {
-  "name": "@a24z/logo-component",
+  "name": "@principal-ai/logo-component",
   "version": "0.1.1",
   "description": "Animated wireframe sphere logo component",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && tsc --module esnext --outDir dist/esm",
+    "build": "rm -rf dist && tsc && tsc --project tsconfig.esm.json && cp dist/esm/index.js dist/index.esm.js",
     "prepublishOnly": "npm run build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

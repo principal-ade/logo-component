@@ -5,13 +5,13 @@ An animated wireframe sphere logo component for React.
 ## Installation
 
 ```bash
-npm install @a24z/logo-component
+npm install @principal-ai/logo-component
 ```
 
 ## Usage
 
 ```tsx
-import { Logo } from '@a24z/logo-component';
+import { Logo } from '@principal-ai/logo-component';
 
 function App() {
   return (
