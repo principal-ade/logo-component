@@ -26,6 +26,7 @@ function parseArgs(argv) {
     png: true,
     densityMultiplier: 2,
     background: null,
+    component: "Logo",
   };
 
   const normalized = [];
@@ -82,6 +83,17 @@ function parseArgs(argv) {
         options.background = parseBackground(next);
         i++;
         break;
+      case "--component":
+        if (next === "ForksLogo" || next === "forks") {
+          options.component = "ForksLogo";
+          if (options.fileName === "logo") options.fileName = "forks-logo";
+        } else if (next === "Logo" || next === "logo") {
+          options.component = "Logo";
+        } else {
+          throw new Error(`Unknown component: ${next}. Use "Logo" or "ForksLogo".`);
+        }
+        i++;
+        break;
       default:
         throw new Error(`Unknown flag: ${token}`);
     }
@@ -127,8 +139,9 @@ function parseBackground(value) {
   return { r, g, b, alpha };
 }
 
-function loadLogoComponent() {
-  const filePath = path.resolve(__dirname, "../src/Logo.tsx");
+function loadLogoComponent(componentName = "Logo") {
+  const fileName = componentName === "ForksLogo" ? "ForksLogo.tsx" : "Logo.tsx";
+  const filePath = path.resolve(__dirname, `../src/${fileName}`);
   const source = fs.readFileSync(filePath, "utf8");
   const transpiled = ts.transpileModule(source, {
     compilerOptions: {
@@ -138,11 +151,11 @@ function loadLogoComponent() {
       esModuleInterop: true,
       sourceMap: false,
     },
-    fileName: "Logo.tsx",
+    fileName,
   });
 
   const module = { exports: {} };
-  const script = new vm.Script(transpiled.outputText, { filename: "Logo.generated.js" });
+  const script = new vm.Script(transpiled.outputText, { filename: `${componentName}.generated.js` });
   const context = vm.createContext({
     require,
     module,
@@ -155,7 +168,7 @@ function loadLogoComponent() {
   script.runInContext(context);
 
   const exported = module.exports;
-  return exported.Logo || exported.default;
+  return exported[componentName] || exported.default;
 }
 
 async function ensureDirectory(dir) {
@@ -206,9 +219,9 @@ async function main() {
   const svgPath = path.join(outputDir, `${baseName}.svg`);
   const pngPath = path.join(outputDir, `${baseName}.png`);
 
-  const Logo = loadLogoComponent();
+  const Logo = loadLogoComponent(options.component);
   if (typeof Logo !== "function") {
-    throw new Error("Unable to load Logo component. Ensure src/Logo.tsx exports the component.");
+    throw new Error(`Unable to load ${options.component} component. Ensure src/${options.component}.tsx exports the component.`);
   }
 
   const element = React.createElement(Logo, {

@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Logo } from "../Logo";
+import { ForksLogo } from "../ForksLogo";
 
 const meta = {
-  title: "Components/Logo",
-  component: Logo,
+  title: "Components/ForksLogo",
+  component: ForksLogo,
   parameters: {
     layout: "centered",
     backgrounds: {
@@ -37,7 +37,7 @@ const meta = {
       description: "Overall opacity of the logo",
     },
   },
-} satisfies Meta<typeof Logo>;
+} satisfies Meta<typeof ForksLogo>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -77,15 +77,6 @@ export const CustomColors: Story = {
     color: "#ff00ff",
     particleColor: "#ffff00",
     opacity: 0.9,
-  },
-};
-
-export const LowOpacity: Story = {
-  args: {
-    width: 200,
-    height: 200,
-    color: "#00ffff",
-    opacity: 0.5,
   },
 };
 
