@@ -20,7 +20,7 @@ export const Logo: React.FC<LogoProps> = ({
     <svg
       width={width}
       height={height}
-      viewBox="0 0 200 200"
+      viewBox="30 30 140 140"
       xmlns="http://www.w3.org/2000/svg"
       style={{ opacity }}
     >
