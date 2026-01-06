@@ -26,6 +26,8 @@ function parseArgs(argv) {
     png: true,
     densityMultiplier: 2,
     background: null,
+    circularBackground: false,
+    padding: null,
     component: "Logo",
   };
 
@@ -83,6 +85,13 @@ function parseArgs(argv) {
         options.background = parseBackground(next);
         i++;
         break;
+      case "--circular-background":
+        options.circularBackground = true;
+        break;
+      case "--padding":
+        options.padding = parseInteger(next, 0, "padding", true);
+        i++;
+        break;
       case "--component":
         if (next === "ForksLogo" || next === "forks") {
           options.component = "ForksLogo";
@@ -106,10 +115,11 @@ function parseArgs(argv) {
   return options;
 }
 
-function parseInteger(value, fallback, label) {
-  if (!value) return fallback;
+function parseInteger(value, fallback, label, allowZero = false) {
+  if (value === undefined || value === null) return fallback;
   const parsed = Number.parseInt(value, 10);
-  if (Number.isNaN(parsed) || parsed <= 0) {
+  const minValue = allowZero ? 0 : 1;
+  if (Number.isNaN(parsed) || parsed < minValue) {
     throw new Error(`Invalid ${label ?? "value"}: ${value}`);
   }
   return parsed;
@@ -202,11 +212,12 @@ async function maybeWritePng(svgMarkup, options, destination) {
 
   pipeline = pipeline.resize({ width: options.size, height: options.size, fit: "contain" });
 
-  const pngOptions = { compressionLevel: 9, adaptiveFiltering: true };
-  if (options.background) {
-    pngOptions.background = options.background;
+  // Flatten with background color if specified (but not for circular backgrounds)
+  if (options.background && options.background.alpha > 0 && !options.circularBackground) {
+    pipeline = pipeline.flatten({ background: options.background });
   }
-  pipeline = pipeline.png(pngOptions);
+
+  pipeline = pipeline.png({ compressionLevel: 9, adaptiveFiltering: true });
 
   await pipeline.toFile(destination);
   return { skipped: false };
@@ -231,7 +242,34 @@ async function main() {
     particleColor: options.particleColor,
     opacity: options.opacity,
   });
-  const svgMarkup = renderToStaticMarkup(element);
+  let svgMarkup = renderToStaticMarkup(element);
+
+  // Adjust viewBox if padding is specified (crops around the circle)
+  // Circle is at cx=100, cy=100 with r=67, so bounds are 33,33 to 167,167
+  if (options.padding !== null) {
+    const circleRadius = 67;
+    const circleCenter = 100;
+    const minCoord = circleCenter - circleRadius - options.padding;
+    const viewSize = (circleRadius + options.padding) * 2;
+    svgMarkup = svgMarkup.replace(
+      /viewBox="0 0 200 200"/,
+      `viewBox="${minCoord} ${minCoord} ${viewSize} ${viewSize}"`
+    );
+  }
+
+  // Insert background if specified
+  if (options.background && options.background.alpha > 0) {
+    const { r, g, b, alpha } = options.background;
+    const bgColor = `rgba(${r},${g},${b},${alpha})`;
+    // Insert background right after the opening <svg> tag
+    const bgElement = options.circularBackground
+      ? `<circle cx="100" cy="100" r="67" fill="${bgColor}"/>`
+      : `<rect width="100%" height="100%" fill="${bgColor}"/>`;
+    svgMarkup = svgMarkup.replace(
+      /(<svg[^>]*>)/,
+      `$1${bgElement}`
+    );
+  }
 
   await ensureDirectory(outputDir);
   await writeSvg(svgPath, svgMarkup);
