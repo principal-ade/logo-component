@@ -19,7 +19,6 @@ npm run export-icon -- \
   --name=principal-ade-icon \
   --color=#ffffff \
   --particle-color=#00ffff \
-  --circular-background \
   --background=#1a1a1a \
   --density-multiplier=1
 ```
@@ -33,9 +32,9 @@ python3 generate_icons.py
 ```
 
 This generates:
-- Mac `.icns` file (no padding - macOS handles spacing)
-- Windows `.ico` file
-- All required size variants
+- Mac `.icns` file (uses Apple's standard 10% padding - 100px on 1024px canvas)
+- Windows `.ico` file (with padding)
+- All required size variants with and without padding
 
 ## Generate Web App Icons
 
@@ -48,7 +47,6 @@ npm run export-icon -- \
   --name=icon-192x192 \
   --color=#ffffff \
   --particle-color=#00ffff \
-  --circular-background \
   --background=#1a1a1a \
   --density-multiplier=1
 
@@ -58,7 +56,6 @@ npm run export-icon -- \
   --name=icon-512x512 \
   --color=#ffffff \
   --particle-color=#00ffff \
-  --circular-background \
   --background=#1a1a1a \
   --density-multiplier=1
 ```
@@ -104,6 +101,10 @@ Only the source `principal-ade-icon.png` is tracked in git.
 ## Important Notes
 
 - **Density Multiplier**: Use `--density-multiplier=1` for large sizes (1024+) to avoid Sharp's pixel limit errors
-- **Mac Icons**: The Mac `.icns` file uses NO padding - macOS applies its own visual effects
-- **Web Icons**: PWA icons are committed to git since they're served directly to browsers
+- **Mac Icons**: The Mac `.icns` file uses Apple's standard 10% padding (100 pixels on 1024px canvas) as per Apple Human Interface Guidelines
+  - For 1024x1024 canvas: icon content should be 824x824 pixels
+  - Rounded rectangle with 185.4px corner radius
+  - This ensures visual consistency with other macOS apps
+- **Web Icons**: PWA icons are committed to git since they're served directly to browsers (no padding needed)
 - **Color Consistency**: Always use the standard colors above unless specifically requested otherwise
+- **Background Shape**: Use rectangular `--background` (NOT `--circular-background`) - the Python script applies rounded corners, and circular backgrounds create visible white gaps between the circle and the rounded rectangle edges
