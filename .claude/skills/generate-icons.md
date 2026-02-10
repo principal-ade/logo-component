@@ -19,9 +19,13 @@ npm run export-icon -- \
   --name=principal-ade-icon \
   --color=#ffffff \
   --particle-color=#00ffff \
+  --circular-background \
   --background=#1a1a1a \
+  --padding=14 \
   --density-multiplier=1
 ```
+
+The `--padding=14` adds approximately 100px of transparent spacing around the circular logo within the icon (before the macOS 100px padding is applied).
 
 Then copy to desktop-app and regenerate platform-specific icons:
 
@@ -32,7 +36,7 @@ python3 generate_icons.py
 ```
 
 This generates:
-- Mac `.icns` file (uses Apple's standard 10% padding - 100px on 1024px canvas)
+- Mac `.icns` file (uses Apple's exact specification: 100px padding on 1024px canvas)
 - Windows `.ico` file (with padding)
 - All required size variants with and without padding
 
@@ -79,7 +83,7 @@ Available flags for `npm run export-icon`:
 - `--opacity <0-1>`: Overall opacity (default: 1)
 - `--background <hex|transparent>`: Background fill color
 - `--circular-background`: Use circular background instead of rectangular
-- `--padding <number>`: Padding around the icon in pixels
+- `--padding <number>`: Additional spacing around the logo in SVG coordinates (e.g., 14 ≈ 100px at 1024px output)
 - `--density-multiplier <number>`: Rasterization density (default: 2, use 1 to avoid pixel limits)
 - `--svg-only`: Skip PNG generation
 - `--output <path>`: Destination directory (default: "exports")
@@ -101,10 +105,16 @@ Only the source `principal-ade-icon.png` is tracked in git.
 ## Important Notes
 
 - **Density Multiplier**: Use `--density-multiplier=1` for large sizes (1024+) to avoid Sharp's pixel limit errors
-- **Mac Icons**: The Mac `.icns` file uses Apple's standard 10% padding (100 pixels on 1024px canvas) as per Apple Human Interface Guidelines
-  - For 1024x1024 canvas: icon content should be 824x824 pixels
+- **Mac Icons**: The Mac `.icns` file uses Apple's exact specification: 100 pixels of padding on 1024px canvas (9.765625%) as per Apple Human Interface Guidelines
+  - For 1024x1024 canvas: 100px padding on each side, icon content is 824x824 pixels
   - Rounded rectangle with 185.4px corner radius
+  - The padding scales proportionally for other icon sizes
   - This ensures visual consistency with other macOS apps
 - **Web Icons**: PWA icons are committed to git since they're served directly to browsers (no padding needed)
 - **Color Consistency**: Always use the standard colors above unless specifically requested otherwise
-- **Background Shape**: Use rectangular `--background` (NOT `--circular-background`) - the Python script applies rounded corners, and circular backgrounds create visible white gaps between the circle and the rounded rectangle edges
+- **Background Shape**: Use `--circular-background` with `--background` to create a circular dark background behind the logo sphere
+  - The circular background is set to radius 70 to fully cover the white wireframe stroke (radius 67 with 1.5px stroke width)
+  - The area outside the circle (within the rounded rectangle) will be transparent
+  - The Python script applies Apple's 100px padding with rounded corners, creating the proper macOS icon shape
+  - This allows the logo's spherical design to be preserved while meeting macOS icon requirements
+- **Glow Effect**: The export script automatically removes the radius 80 glow effect for static icons to prevent visual artifacts

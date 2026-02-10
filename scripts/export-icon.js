@@ -29,6 +29,7 @@ function parseArgs(argv) {
     circularBackground: false,
     padding: null,
     component: "Logo",
+    scale: 1.0,
   };
 
   const normalized = [];
@@ -101,6 +102,10 @@ function parseArgs(argv) {
         } else {
           throw new Error(`Unknown component: ${next}. Use "Logo" or "ForksLogo".`);
         }
+        i++;
+        break;
+      case "--scale":
+        options.scale = clamp(Number(next), 0.1, 2.0, options.scale);
         i++;
         break;
       default:
@@ -210,7 +215,12 @@ async function maybeWritePng(svgMarkup, options, destination) {
   const density = Math.max(1, Math.round(options.size * options.densityMultiplier));
   let pipeline = sharp(svgBuffer, { density });
 
-  pipeline = pipeline.resize({ width: options.size, height: options.size, fit: "contain" });
+  pipeline = pipeline.resize({
+    width: options.size,
+    height: options.size,
+    fit: "contain",
+    kernel: "lanczos3" // Use highest quality resampling
+  });
 
   // Flatten with background color if specified (but not for circular backgrounds)
   if (options.background && options.background.alpha > 0 && !options.circularBackground) {
@@ -244,6 +254,18 @@ async function main() {
   });
   let svgMarkup = renderToStaticMarkup(element);
 
+  // Remove the glow effect for static icons (radius 80 circle with sphereGlow gradient)
+  svgMarkup = svgMarkup.replace(/<circle cx="100" cy="100" r="80"[^>]*fill="url\(#sphereGlow\)"[^>]*><\/circle>/, '');
+
+  // Apply scale if specified (scales logo content, not viewBox)
+  if (options.scale !== 1.0) {
+    svgMarkup = svgMarkup.replace(
+      /(<\/defs>)/,
+      `$1<g transform="translate(100,100) scale(${options.scale}) translate(-100,-100)">`
+    );
+    svgMarkup = svgMarkup.replace(/<\/svg>$/, '</g></svg>');
+  }
+
   // Adjust viewBox if padding is specified (crops around the circle)
   // Circle is at cx=100, cy=100 with r=67, so bounds are 33,33 to 167,167
   if (options.padding !== null) {
@@ -252,7 +274,7 @@ async function main() {
     const minCoord = circleCenter - circleRadius - options.padding;
     const viewSize = (circleRadius + options.padding) * 2;
     svgMarkup = svgMarkup.replace(
-      /viewBox="0 0 200 200"/,
+      /viewBox="[^"]*"/,
       `viewBox="${minCoord} ${minCoord} ${viewSize} ${viewSize}"`
     );
   }
@@ -263,7 +285,7 @@ async function main() {
     const bgColor = `rgba(${r},${g},${b},${alpha})`;
     // Insert background right after the opening <svg> tag
     const bgElement = options.circularBackground
-      ? `<circle cx="100" cy="100" r="67" fill="${bgColor}"/>`
+      ? `<circle cx="100" cy="100" r="70" fill="${bgColor}" shape-rendering="geometricPrecision"/>`
       : `<rect width="100%" height="100%" fill="${bgColor}"/>`;
     svgMarkup = svgMarkup.replace(
       /(<svg[^>]*>)/,
