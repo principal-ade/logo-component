@@ -1,15 +1,30 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { MazeGenerator } from "./utils/mazeGenerator";
 
+interface MazeDemoTheme {
+  primary: string;
+  error: string;
+  warning: string;
+  success: string;
+  background: string;
+  text: string;
+}
+
 interface MazeDemoProps {
   width?: number;
   height?: number;
-  mazeColor?: string;
-  errorColor?: string;
-  searchColor?: string;
-  solutionColor?: string;
+  theme?: Partial<MazeDemoTheme>;
   mazeSeed?: number;
 }
+
+const defaultTheme: MazeDemoTheme = {
+  primary: "#6366f1",
+  error: "#ef4444",
+  warning: "#f59e0b",
+  success: "#10b981",
+  background: "#2a2a2a",
+  text: "#ffffff",
+};
 
 interface RevealedCell {
   col: number;
@@ -19,12 +34,10 @@ interface RevealedCell {
 export const MazeDemoNew: React.FC<MazeDemoProps> = ({
   width = 450,
   height = 620,
-  mazeColor = "#6366f1",
-  errorColor = "#ef4444",
-  searchColor = "#f59e0b",
-  solutionColor = "#10b981",
+  theme: themeProp,
   mazeSeed = 42,
 }) => {
+  const theme = { ...defaultTheme, ...themeProp };
   // Maze configuration
   const gridSize = 10;
   const cellSize = 30;
@@ -204,7 +217,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
     if (mode === 'principal') {
       const isBlockageCell = col === actualBlockageCol && row === actualBlockageRow;
       if (isBlockageCell) {
-        setDirectionHint("🎯 Blockage Found!");
+        setDirectionHint("Blockage Found!");
         setBlockageFound(true);
       }
       return;
@@ -222,7 +235,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
     const isBlockageCell = col === actualBlockageCol && row === actualBlockageRow;
 
     if (isBlockageCell) {
-      setDirectionHint("🎯 Blockage Found!");
+      setDirectionHint("Blockage Found!");
       setBlockageFound(true);
 
       const cellsToReveal: RevealedCell[] = [...revealedCells];
@@ -246,10 +259,10 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
 
       let direction = "";
       if (Math.abs(rowDiff) > 1) {
-        direction += rowDiff > 0 ? "↓ " : "↑ ";
+        direction += rowDiff > 0 ? "South " : "North ";
       }
       if (Math.abs(colDiff) > 1) {
-        direction += colDiff > 0 ? "→" : "←";
+        direction += colDiff > 0 ? "East" : "West";
       }
 
       const distance = Math.abs(colDiff) + Math.abs(rowDiff);
@@ -275,7 +288,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
         width={mazeWidth}
         height={mazeHeight}
         fill="none"
-        stroke={mazeColor}
+        stroke={theme.primary}
         strokeWidth="3"
         opacity={0.3 * opacity}
       />
@@ -315,7 +328,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
           y1={padding + y * cellSize}
           x2={mazeX + x2 * cellSize}
           y2={padding + y * cellSize}
-          stroke={isBlockage ? errorColor : mazeColor}
+          stroke={isBlockage ? theme.error : theme.primary}
           strokeWidth={isBlockage ? 4 : 2.5}
           strokeLinecap="round"
           opacity={opacity}
@@ -343,7 +356,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
           y1={padding + y1 * cellSize}
           x2={mazeX + x * cellSize}
           y2={padding + y2 * cellSize}
-          stroke={isBlockage ? errorColor : mazeColor}
+          stroke={isBlockage ? theme.error : theme.primary}
           strokeWidth={isBlockage ? 4 : 2.5}
           strokeLinecap="round"
           opacity={opacity}
@@ -368,7 +381,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
           y1={padding + row * cellSize}
           x2={mazeX + mazeWidth}
           y2={padding + row * cellSize}
-          stroke={mazeColor}
+          stroke={theme.primary}
           strokeWidth="0.5"
           opacity={0.15 * opacity}
         />
@@ -382,7 +395,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
           y1={padding}
           x2={mazeX + col * cellSize}
           y2={padding + mazeHeight}
-          stroke={mazeColor}
+          stroke={theme.primary}
           strokeWidth="0.5"
           opacity={0.15 * opacity}
         />
@@ -413,10 +426,10 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
   return (
     <svg width={width} height={height} xmlns="http://www.w3.org/2000/svg">
       {/* Title */}
-      <text x={width / 2} y={25} textAnchor="middle" fill={mazeColor} fontSize="16" fontWeight="bold">
+      <text x={width / 2} y={25} textAnchor="middle" fill={theme.primary} fontSize="16" fontWeight="bold">
         {getTitle()}
       </text>
-      <text x={width / 2} y={40} textAnchor="middle" fill={mazeColor} fontSize="11" opacity="0.6">
+      <text x={width / 2} y={40} textAnchor="middle" fill={theme.primary} fontSize="11" opacity="0.6">
         {getSubtitle()}
       </text>
 
@@ -430,14 +443,14 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
             cx={mazeX + (startCol + 0.5) * cellSize}
             cy={padding + (startRow + 0.5) * cellSize}
             r="5"
-            fill={searchColor}
+            fill={theme.warning}
           />
           <text
             x={mazeX - 5}
             y={padding - 5}
             textAnchor="end"
             fontSize="10"
-            fill={searchColor}
+            fill={theme.warning}
             fontWeight="bold"
           >
             START
@@ -450,7 +463,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               cy={padding + (destRow + 0.5) * cellSize}
               r="8"
               fill="none"
-              stroke={mazeColor}
+              stroke={theme.primary}
               strokeWidth="1.5"
               opacity="0.5"
             />
@@ -459,7 +472,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               cy={padding + (destRow + 0.5) * cellSize}
               r="5"
               fill="none"
-              stroke={mazeColor}
+              stroke={theme.primary}
               strokeWidth="1.5"
               opacity="0.6"
             />
@@ -467,7 +480,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               cx={mazeX + (destCol + 0.5) * cellSize}
               cy={padding + (destRow + 0.5) * cellSize}
               r="2"
-              fill={mazeColor}
+              fill={theme.primary}
               opacity="0.7"
             />
           </g>
@@ -476,7 +489,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
             y={padding + mazeHeight + 15}
             textAnchor="start"
             fontSize="9"
-            fill={mazeColor}
+            fill={theme.primary}
             fontWeight="bold"
           >
             DEST
@@ -515,7 +528,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding}
               width={mazeWidth}
               height={mazeHeight}
-              fill="#2a2a2a"
+              fill={theme.background}
               opacity={coverOpacity}
               mask="url(#mazeCoverMask)"
             />
@@ -525,7 +538,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               width={mazeWidth}
               height={mazeHeight}
               fill="none"
-              stroke={mazeColor}
+              stroke={theme.primary}
               strokeWidth="3"
               opacity="0.4"
             />
@@ -537,7 +550,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
                   y={padding + mazeHeight / 2 - 40}
                   width={260}
                   height={80}
-                  fill="#000000"
+                  fill={theme.background}
                   opacity="0.7"
                   rx="8"
                   pointerEvents="none"
@@ -547,18 +560,18 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
                   y={padding + mazeHeight / 2 - 15}
                   textAnchor="middle"
                   fontSize="18"
-                  fill={errorColor}
+                  fill={theme.error}
                   fontWeight="bold"
                   pointerEvents="none"
                 >
-                  🚨 INCIDENT ALERT
+                  INCIDENT ALERT
                 </text>
                 <text
                   x={mazeX + mazeWidth / 2}
                   y={padding + mazeHeight / 2 + 10}
                   textAnchor="middle"
                   fontSize="13"
-                  fill="#ffffff"
+                  fill={theme.text}
                   fontWeight="normal"
                   pointerEvents="none"
                 >
@@ -574,7 +587,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
                   y={padding + mazeHeight / 2 - 25}
                   width={200}
                   height={40}
-                  fill="#000000"
+                  fill={theme.background}
                   opacity="0.7"
                   rx="6"
                   pointerEvents="none"
@@ -584,7 +597,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
                   y={padding + mazeHeight / 2}
                   textAnchor="middle"
                   fontSize="16"
-                  fill="#ffffff"
+                  fill={theme.text}
                   fontWeight="bold"
                   pointerEvents="none"
                 >
@@ -612,7 +625,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
                 style={{ cursor: 'pointer' }}
                 onClick={() => handleCellClick(col, row)}
                 onMouseEnter={(e) => {
-                  e.currentTarget.setAttribute('fill', searchColor);
+                  e.currentTarget.setAttribute('fill', theme.warning);
                   e.currentTarget.setAttribute('opacity', '0.1');
                 }}
                 onMouseLeave={(e) => {
@@ -637,7 +650,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 25}
               width={120}
               height={40}
-              fill={searchColor}
+              fill={theme.warning}
               rx="6"
             />
             <text
@@ -645,7 +658,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 52}
               textAnchor="middle"
               fontSize="12"
-              fill="#ffffff"
+              fill={theme.text}
               fontWeight="bold"
               pointerEvents="none"
             >
@@ -662,7 +675,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 25}
               width={120}
               height={40}
-              fill={mazeColor}
+              fill={theme.primary}
               rx="6"
             />
             <text
@@ -670,7 +683,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 52}
               textAnchor="middle"
               fontSize="12"
-              fill="#ffffff"
+              fill={theme.text}
               fontWeight="bold"
               pointerEvents="none"
             >
@@ -692,7 +705,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 25}
               width={120}
               height={40}
-              fill={searchColor}
+              fill={theme.warning}
               rx="6"
             />
             <text
@@ -700,7 +713,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 52}
               textAnchor="middle"
               fontSize="16"
-              fill="#ffffff"
+              fill={theme.text}
               fontWeight="bold"
               pointerEvents="none"
             >
@@ -718,7 +731,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
             y={padding + mazeHeight + 20}
             width={mazeWidth}
             height={35}
-            fill={solutionColor}
+            fill={theme.success}
             opacity="0.9"
             rx="4"
           />
@@ -727,17 +740,17 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
             y={padding + mazeHeight + 35}
             textAnchor="middle"
             fontSize="11"
-            fill="#ffffff"
+            fill={theme.text}
             fontWeight="normal"
           >
-            ✓ Deployment Successful
+            Deployment Successful
           </text>
           <text
             x={mazeX + mazeWidth / 2}
             y={padding + mazeHeight + 50}
             textAnchor="middle"
             fontSize="14"
-            fill="#ffffff"
+            fill={theme.text}
             fontWeight="bold"
           >
             All systems operational
@@ -753,7 +766,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
             y={padding + mazeHeight + 20}
             width={mazeWidth}
             height={35}
-            fill={blockageFound ? solutionColor : errorColor}
+            fill={blockageFound ? theme.success : theme.error}
             opacity="0.9"
             rx="4"
           />
@@ -762,7 +775,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
             y={padding + mazeHeight + 35}
             textAnchor="middle"
             fontSize="11"
-            fill="#ffffff"
+            fill={theme.text}
             fontWeight="normal"
           >
             {blockageFound ? "Incident Resolved!" : "Incident Cost"}
@@ -772,7 +785,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
             y={padding + mazeHeight + 50}
             textAnchor="middle"
             fontSize="18"
-            fill="#ffffff"
+            fill={theme.text}
             fontWeight="bold"
           >
             ${incidentCost.toLocaleString()}
@@ -792,7 +805,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 65}
               width={120}
               height={25}
-              fill={mazeColor}
+              fill={theme.primary}
               opacity="0.2"
               rx="4"
             />
@@ -801,7 +814,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 82}
               textAnchor="middle"
               fontSize="10"
-              fill={mazeColor}
+              fill={theme.primary}
               fontWeight="bold"
               pointerEvents="none"
             >
@@ -818,7 +831,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 65}
               width={120}
               height={25}
-              fill={solutionColor}
+              fill={theme.success}
               opacity="0.8"
               rx="4"
             />
@@ -827,7 +840,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 82}
               textAnchor="middle"
               fontSize="10"
-              fill="#ffffff"
+              fill={theme.text}
               fontWeight="bold"
               pointerEvents="none"
             >
@@ -849,7 +862,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 65}
               width={120}
               height={25}
-              fill={mazeColor}
+              fill={theme.primary}
               opacity="0.3"
               rx="4"
             />
@@ -858,7 +871,7 @@ export const MazeDemoNew: React.FC<MazeDemoProps> = ({
               y={padding + mazeHeight + 82}
               textAnchor="middle"
               fontSize="10"
-              fill={mazeColor}
+              fill={theme.primary}
               fontWeight="bold"
               pointerEvents="none"
             >

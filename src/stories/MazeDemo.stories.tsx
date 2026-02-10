@@ -15,17 +15,9 @@ const meta: Meta<typeof MazeDemo> = {
     height: {
       control: { type: "range", min: 500, max: 800, step: 50 },
     },
-    mazeColor: {
-      control: "color",
-    },
-    errorColor: {
-      control: "color",
-    },
-    searchColor: {
-      control: "color",
-    },
-    solutionColor: {
-      control: "color",
+    theme: {
+      control: "object",
+      description: "Theme object with color properties",
     },
     mazeSeed: {
       control: { type: "number" },
@@ -65,10 +57,12 @@ export const CustomColors: Story = {
   args: {
     width: 450,
     height: 620,
-    mazeColor: "#8b5cf6",
-    errorColor: "#dc2626",
-    searchColor: "#f97316",
-    solutionColor: "#059669",
+    theme: {
+      primary: "#8b5cf6",
+      error: "#dc2626",
+      warning: "#f97316",
+      success: "#059669",
+    },
     mazeSeed: 42,
   },
 };
@@ -85,10 +79,12 @@ export const DarkTheme: Story = {
   args: {
     width: 450,
     height: 620,
-    mazeColor: "#60a5fa",
-    errorColor: "#f87171",
-    searchColor: "#fbbf24",
-    solutionColor: "#34d399",
+    theme: {
+      primary: "#60a5fa",
+      error: "#f87171",
+      warning: "#fbbf24",
+      success: "#34d399",
+    },
     mazeSeed: 42,
   },
   parameters: {
