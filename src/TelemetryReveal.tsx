@@ -1,5 +1,7 @@
-import React, { useMemo, useId } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import { TELEMETRY_PRESETS, PathDefinition } from "./presets";
+
+let globalIdCounter = 0;
 
 type ChaosMode = "none" | "fragmented";
 
@@ -101,9 +103,16 @@ export const TelemetryReveal: React.FC<TelemetryRevealProps> = ({
   loop = true,
   loopDelay = 1,
 }) => {
-  const uniqueId = useId();
+  const idRef = useRef<string | null>(null);
+  if (idRef.current === null) {
+    idRef.current = `tr${globalIdCounter++}`;
+  }
+  const uniqueId = idRef.current;
   const finalParticleColor = particleColor || color;
   const isFragmented = chaosMode === "fragmented";
+
+  // Loop via remount
+  const [cycle, setCycle] = useState(0);
 
   // Resolve paths from custom or preset
   const resolvedPaths = useMemo(() => {
@@ -154,8 +163,21 @@ export const TelemetryReveal: React.FC<TelemetryRevealProps> = ({
   const assemblyEndTime = isFragmented ? dotsDuration + chaosDuration : 0;
   const flowBeginTime = assemblyEndTime + flowDelay;
 
+  // Total animation duration (last particle finishes at flowBeginTime + flowDuration)
+  const totalDuration = flowBeginTime + flowDuration;
+
+  // Remount-based loop
+  useEffect(() => {
+    if (!loop) return;
+    const timeout = setTimeout(() => {
+      setCycle((c) => c + 1);
+    }, (totalDuration + loopDelay) * 1000);
+    return () => clearTimeout(timeout);
+  }, [loop, totalDuration, loopDelay, cycle]);
+
   return (
     <svg
+      key={cycle}
       width={width}
       height={height}
       viewBox={resolvedViewBox}
@@ -215,33 +237,22 @@ export const TelemetryReveal: React.FC<TelemetryRevealProps> = ({
                     fill={color}
                     opacity="0"
                   >
-                    {/* Fade in quickly */}
                     <animate
                       attributeName="opacity"
                       from="0"
                       to="1"
                       dur="0.15s"
-                      begin={loop ? `${index * perItemDotsDuration}s;loop-${uniqueId}.end+${loopDelay + index * perItemDotsDuration}s` : `${index * perItemDotsDuration}s`}
+                      begin={`${index * perItemDotsDuration}s`}
                       fill="freeze"
                     />
-                    {/* Fade out after line is drawn */}
                     <animate
                       attributeName="opacity"
                       from="1"
                       to="0"
                       dur="0.2s"
-                      begin={loop ? `${dotsPhaseEnd + (index + 1) * perItemLinesDuration}s;loop-${uniqueId}.end+${loopDelay + dotsPhaseEnd + (index + 1) * perItemLinesDuration}s` : `${dotsPhaseEnd + (index + 1) * perItemLinesDuration}s`}
+                      begin={`${dotsPhaseEnd + (index + 1) * perItemLinesDuration}s`}
                       fill="freeze"
                     />
-                    {loop && (
-                      <animate
-                        attributeName="opacity"
-                        to="0"
-                        dur="0.01s"
-                        begin={`loop-${uniqueId}.end`}
-                        fill="freeze"
-                      />
-                    )}
                   </circle>
                   {/* End dot */}
                   <circle
@@ -251,33 +262,22 @@ export const TelemetryReveal: React.FC<TelemetryRevealProps> = ({
                     fill={color}
                     opacity="0"
                   >
-                    {/* Fade in quickly */}
                     <animate
                       attributeName="opacity"
                       from="0"
                       to="1"
                       dur="0.15s"
-                      begin={loop ? `${index * perItemDotsDuration}s;loop-${uniqueId}.end+${loopDelay + index * perItemDotsDuration}s` : `${index * perItemDotsDuration}s`}
+                      begin={`${index * perItemDotsDuration}s`}
                       fill="freeze"
                     />
-                    {/* Fade out after line is drawn */}
                     <animate
                       attributeName="opacity"
                       from="1"
                       to="0"
                       dur="0.2s"
-                      begin={loop ? `${dotsPhaseEnd + (index + 1) * perItemLinesDuration}s;loop-${uniqueId}.end+${loopDelay + dotsPhaseEnd + (index + 1) * perItemLinesDuration}s` : `${dotsPhaseEnd + (index + 1) * perItemLinesDuration}s`}
+                      begin={`${dotsPhaseEnd + (index + 1) * perItemLinesDuration}s`}
                       fill="freeze"
                     />
-                    {loop && (
-                      <animate
-                        attributeName="opacity"
-                        to="0"
-                        dur="0.01s"
-                        begin={`loop-${uniqueId}.end`}
-                        fill="freeze"
-                      />
-                    )}
                   </circle>
                 </>
               )}
@@ -297,98 +297,54 @@ export const TelemetryReveal: React.FC<TelemetryRevealProps> = ({
                 {/* In fragmented mode: lines draw AFTER all dots appear (sequential) */}
                 {isFragmented && (
                   <>
-                    {/* Fade in as line draws, stay visible */}
                     <animate
                       attributeName="opacity"
                       values={`0;1;1;${fadeAfterAssembly ? fadeOpacity : 1}`}
-                      keyTimes={`0;0.1;0.9;1`}
+                      keyTimes="0;0.1;0.9;1"
                       dur={`${perItemLinesDuration + chaosDuration}s`}
-                      begin={loop ? `${dotsPhaseEnd + index * perItemLinesDuration}s;loop-${uniqueId}.end+${loopDelay + dotsPhaseEnd + index * perItemLinesDuration}s` : `${dotsPhaseEnd + index * perItemLinesDuration}s`}
+                      begin={`${dotsPhaseEnd + index * perItemLinesDuration}s`}
                       fill="freeze"
                     />
-                    {/* Line draws from start to end (sequential) */}
                     <animate
                       attributeName="stroke-dashoffset"
                       from={pathLength}
                       to="0"
                       dur={`${perItemLinesDuration}s`}
-                      begin={loop ? `${dotsPhaseEnd + index * perItemLinesDuration}s;loop-${uniqueId}.end+${loopDelay + dotsPhaseEnd + index * perItemLinesDuration}s` : `${dotsPhaseEnd + index * perItemLinesDuration}s`}
+                      begin={`${dotsPhaseEnd + index * perItemLinesDuration}s`}
                       fill="freeze"
                       calcMode="spline"
                       keySplines="0.4 0 0.2 1"
                       keyTimes="0;1"
                     />
-                    {/* Reset for loop */}
-                    {loop && (
-                      <>
-                        <animate
-                          attributeName="opacity"
-                          to="0"
-                          dur="0.01s"
-                          begin={`loop-${uniqueId}.end`}
-                          fill="freeze"
-                        />
-                        <animate
-                          attributeName="stroke-dashoffset"
-                          to={pathLength}
-                          dur="0.01s"
-                          begin={`loop-${uniqueId}.end`}
-                          fill="freeze"
-                        />
-                      </>
-                    )}
                   </>
                 )}
                 {/* In none mode: just apply fade if needed */}
                 {!isFragmented && fadeAfterAssembly && (
-                  <>
-                    <animate
-                      attributeName="opacity"
-                      from="1"
-                      to={fadeOpacity}
-                      dur="0.5s"
-                      begin={loop ? `${flowBeginTime}s;loop-${uniqueId}.end+${loopDelay + flowBeginTime}s` : `${flowBeginTime}s`}
-                      fill="freeze"
-                    />
-                    {loop && (
-                      <animate
-                        attributeName="opacity"
-                        to="1"
-                        dur="0.01s"
-                        begin={`loop-${uniqueId}.end`}
-                        fill="freeze"
-                      />
-                    )}
-                  </>
+                  <animate
+                    attributeName="opacity"
+                    from="1"
+                    to={fadeOpacity}
+                    dur="0.5s"
+                    begin={`${flowBeginTime}s`}
+                    fill="freeze"
+                  />
                 )}
               </path>
 
               {/* Assembly animation - move entire group to final position (sequential) */}
               {isFragmented && (
-                <>
-                  <animateTransform
-                    attributeName="transform"
-                    type="translate"
-                    from={`${offset.x} ${offset.y}`}
-                    to="0 0"
-                    dur={`${perItemAssemblyDuration}s`}
-                    begin={loop ? `${linesPhaseEnd + index * perItemAssemblyDuration}s;loop-${uniqueId}.end+${loopDelay + linesPhaseEnd + index * perItemAssemblyDuration}s` : `${linesPhaseEnd + index * perItemAssemblyDuration}s`}
-                    fill="freeze"
-                    calcMode="spline"
-                    keySplines="0.33 0 0.2 1"
-                    keyTimes="0;1"
-                  />
-                  {loop && (
-                    <animateTransform
-                      attributeName="transform"
-                      type="translate"
-                      to={`${offset.x} ${offset.y}`}
-                      dur="0.01s"
-                      begin={`loop-${uniqueId}.end`}
-                      fill="freeze"
-                    />
-                  )}
-                </>
+                <animateTransform
+                  attributeName="transform"
+                  type="translate"
+                  from={`${offset.x} ${offset.y}`}
+                  to="0 0"
+                  dur={`${perItemAssemblyDuration}s`}
+                  begin={`${linesPhaseEnd + index * perItemAssemblyDuration}s`}
+                  fill="freeze"
+                  calcMode="spline"
+                  keySplines="0.33 0 0.2 1"
+                  keyTimes="0;1"
+                />
               )}
             </g>
           );
@@ -415,14 +371,8 @@ export const TelemetryReveal: React.FC<TelemetryRevealProps> = ({
                   opacity="0"
                 >
                   <animateMotion
-                    id={
-                      pathIndex === resolvedPaths.length - 1 &&
-                      particleIndex === particlesPerPath - 1
-                        ? `loop-${uniqueId}`
-                        : undefined
-                    }
                     dur={`${flowDuration}s`}
-                    begin={loop ? `${beginTime}s;loop-${uniqueId}.end+${loopDelay + beginTime}s` : `${beginTime}s`}
+                    begin={`${beginTime}s`}
                     fill="freeze"
                     path={path.d}
                   />
@@ -431,7 +381,7 @@ export const TelemetryReveal: React.FC<TelemetryRevealProps> = ({
                     values="0;1;1;0"
                     keyTimes="0;0.1;0.9;1"
                     dur={`${flowDuration}s`}
-                    begin={loop ? `${beginTime}s;loop-${uniqueId}.end+${loopDelay + beginTime}s` : `${beginTime}s`}
+                    begin={`${beginTime}s`}
                     fill="freeze"
                   />
                 </circle>
