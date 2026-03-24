@@ -60,6 +60,31 @@ const meta = {
       options: ["none", "fragmented"],
       description: "Show fragmented assembly",
     },
+    showChartIntro: {
+      control: "boolean",
+      description: "Show time-series chart intro (default: true when fragmented)",
+    },
+    chartPattern: {
+      control: "select",
+      options: ["latency", "cpu", "noise"],
+      description: "Telemetry pattern style for chart intro",
+    },
+    chartDuration: {
+      control: { type: "range", min: 0.5, max: 4, step: 0.25 },
+      description: "Duration the chart is visible",
+    },
+    chartLineFadeDuration: {
+      control: { type: "range", min: 0.1, max: 1, step: 0.1 },
+      description: "Duration for chart lines to fade",
+    },
+    chartPauseDuration: {
+      control: { type: "range", min: 0, max: 1, step: 0.1 },
+      description: "Pause after lines fade",
+    },
+    chartTransitionDuration: {
+      control: { type: "range", min: 0.3, max: 2, step: 0.1 },
+      description: "Duration for dots to move to target positions",
+    },
     chaosDuration: {
       control: { type: "range", min: 0.5, max: 5, step: 0.25 },
     },
@@ -329,5 +354,92 @@ export const OpenSansNatural: Story = {
     chaosMode: "fragmented",
     color: "#2ecc71",
     particleColor: "#ffffff",
+  },
+};
+
+// Chart Intro Pattern Stories
+export const ChartIntroLatency: Story = {
+  name: "Chart Intro: Latency Pattern",
+  args: {
+    text: "TELEMETRY",
+    fontUrl: FONTS.robotoMono,
+    fontSize: 48,
+    width: 500,
+    height: 120,
+    chaosMode: "fragmented",
+    chartPattern: "latency",
+    chartDuration: 2,
+    chaosDuration: 2,
+    color: "#00ffff",
+    particleColor: "#00ff88",
+    loopDelay: 1.5,
+  },
+};
+
+export const ChartIntroCPU: Story = {
+  name: "Chart Intro: CPU Pattern",
+  args: {
+    text: "METRICS",
+    fontUrl: FONTS.robotoMono,
+    fontSize: 52,
+    width: 450,
+    height: 120,
+    chaosMode: "fragmented",
+    chartPattern: "cpu",
+    chartDuration: 2,
+    chaosDuration: 2,
+    color: "#4a9eff",
+    particleColor: "#ffffff",
+    loopDelay: 1.5,
+  },
+};
+
+export const ChartIntroNoise: Story = {
+  name: "Chart Intro: Noise Pattern",
+  args: {
+    text: "SIGNAL",
+    fontUrl: FONTS.oswald,
+    fontSize: 64,
+    width: 400,
+    height: 130,
+    chaosMode: "fragmented",
+    chartPattern: "noise",
+    chartDuration: 2,
+    chaosDuration: 2,
+    color: "#e74c3c",
+    particleColor: "#f39c12",
+    loopDelay: 1.5,
+  },
+};
+
+export const ChartIntroDisabled: Story = {
+  name: "Chart Intro: Disabled",
+  args: {
+    text: "NO CHART",
+    fontUrl: FONTS.inter,
+    fontSize: 56,
+    width: 400,
+    height: 120,
+    chaosMode: "fragmented",
+    showChartIntro: false,
+    color: "#9b59b6",
+    particleColor: "#e91e63",
+  },
+};
+
+export const ChartIntroSimple: Story = {
+  name: "Chart Intro: Simple (No Fragmented)",
+  args: {
+    text: "SIMPLE",
+    fontUrl: FONTS.montserrat,
+    fontSize: 64,
+    width: 400,
+    height: 130,
+    chaosMode: "none",
+    showChartIntro: true,
+    chartPattern: "cpu",
+    chartDuration: 2,
+    color: "#1abc9c",
+    particleColor: "#3498db",
   },
 };

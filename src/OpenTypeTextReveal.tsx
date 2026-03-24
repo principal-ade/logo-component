@@ -4,6 +4,7 @@ import opentype from "opentype.js";
 let globalIdCounter = 0;
 
 type ChaosMode = "none" | "fragmented";
+type ChartPattern = "latency" | "cpu" | "noise";
 
 interface OpenTypeTextRevealProps {
   /** The text to display */
@@ -19,6 +20,20 @@ interface OpenTypeTextRevealProps {
   height?: number;
   /** Center the text in the container */
   centerText?: boolean;
+
+  // Chart intro phase (time-series visualization)
+  /** Show time-series chart intro animation (default: true when chaosMode="fragmented") */
+  showChartIntro?: boolean;
+  /** Duration the chart is visible before lines fade (default: 1.5s) */
+  chartDuration?: number;
+  /** Duration for chart lines to fade out (default: 0.5s) */
+  chartLineFadeDuration?: number;
+  /** Pause duration after lines fade, before dots move (default: 0.3s) */
+  chartPauseDuration?: number;
+  /** Duration for dots to animate from chart to target positions (default: 0.8s) */
+  chartTransitionDuration?: number;
+  /** Telemetry pattern style for the chart */
+  chartPattern?: ChartPattern;
 
   // Chaos/assembly phase
   chaosMode?: ChaosMode;
@@ -155,6 +170,92 @@ function seededRandom(seed: number): () => number {
 }
 
 /**
+ * Generate time-series chart positions for dots
+ */
+function generateChartPositions(
+  numDots: number,
+  width: number,
+  height: number,
+  pattern: ChartPattern,
+  seed: number
+): Array<{ x: number; y: number }> {
+  if (numDots === 0) return [];
+
+  const random = seededRandom(seed);
+  const positions: Array<{ x: number; y: number }> = [];
+
+  // Chart area with padding
+  const padding = width * 0.1;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height * 0.6;
+  const chartTop = height * 0.2;
+
+  // Generate y-values based on pattern
+  const yValues: number[] = [];
+
+  switch (pattern) {
+    case "latency": {
+      // Mostly stable baseline with occasional spikes
+      const baseline = 0.3;
+      const numSpikes = Math.max(1, Math.floor(numDots * 0.15)); // ~15% are spikes
+      const spikeIndices = new Set<number>();
+
+      // Pick random spike positions
+      while (spikeIndices.size < numSpikes) {
+        spikeIndices.add(Math.floor(random() * numDots));
+      }
+
+      for (let i = 0; i < numDots; i++) {
+        if (spikeIndices.has(i)) {
+          // Spike: 60-95% height
+          yValues.push(0.6 + random() * 0.35);
+        } else {
+          // Baseline with small noise: 20-40%
+          yValues.push(baseline + (random() - 0.5) * 0.2);
+        }
+      }
+      break;
+    }
+
+    case "cpu": {
+      // Sine wave foundation with noise - gradual rises and drops
+      const frequency = 2 + random() * 2; // 2-4 cycles across the chart
+      for (let i = 0; i < numDots; i++) {
+        const t = i / (numDots - 1 || 1);
+        const sine = Math.sin(t * Math.PI * frequency) * 0.3;
+        const noise = (random() - 0.5) * 0.15;
+        yValues.push(0.5 + sine + noise);
+      }
+      break;
+    }
+
+    case "noise":
+    default: {
+      // Irregular fluctuations using smoothed noise
+      let value = 0.5;
+      for (let i = 0; i < numDots; i++) {
+        // Random walk with mean reversion
+        const drift = (0.5 - value) * 0.1; // Pull toward center
+        const noise = (random() - 0.5) * 0.25;
+        value = Math.max(0.15, Math.min(0.85, value + drift + noise));
+        yValues.push(value);
+      }
+      break;
+    }
+  }
+
+  // Convert to positions
+  for (let i = 0; i < numDots; i++) {
+    const x = padding + (i / (numDots - 1 || 1)) * chartWidth;
+    // Invert y since SVG y increases downward
+    const y = chartTop + (1 - yValues[i]) * chartHeight;
+    positions.push({ x, y });
+  }
+
+  return positions;
+}
+
+/**
  * Split compound path into individual contours
  */
 function splitPathIntoContours(d: string): string[] {
@@ -178,6 +279,12 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
   width = 600,
   height = 150,
   centerText = true,
+  showChartIntro,
+  chartDuration = 1.5,
+  chartLineFadeDuration = 0.5,
+  chartPauseDuration = 0.3,
+  chartTransitionDuration = 0.8,
+  chartPattern = "latency",
   chaosMode = "none",
   chaosDuration = 2,
   dotsDuration = 1.5,
@@ -202,6 +309,9 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
   const uniqueId = idRef.current;
   const finalParticleColor = particleColor || color;
   const isFragmented = chaosMode === "fragmented";
+
+  // Chart intro is on by default when fragmented mode is active
+  const shouldShowChartIntro = showChartIntro ?? isFragmented;
 
   // Font and path state
   const [font, setFont] = useState<opentype.Font | null>(null);
@@ -285,15 +395,36 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
     }));
   }, [resolvedPaths]);
 
-  // Timing calculations
+  // Generate chart positions for the intro animation
+  const chartPositions = useMemo(() => {
+    if (!shouldShowChartIntro) return [];
+    return generateChartPositions(resolvedPaths.length, width, height, chartPattern, 123);
+  }, [shouldShowChartIntro, resolvedPaths.length, width, height, chartPattern]);
+
+  // Target positions for dots after chart phase
+  // Always go to final letter positions (path start points)
+  const dotTargetPositions = useMemo(() => {
+    return resolvedPaths.map((path) => path.endpoints.start);
+  }, [resolvedPaths]);
+
+  // Chart intro timing
+  const chartPhaseEndTime = shouldShowChartIntro
+    ? chartDuration + chartLineFadeDuration + chartPauseDuration + chartTransitionDuration
+    : 0;
+
+  // Timing calculations (offset by chart phase if present)
   const numPaths = resolvedPaths.length || 1;
   const perItemDotsDuration = (dotsDuration * 0.5) / numPaths;
   const perItemLinesDuration = (dotsDuration * 0.5) / numPaths;
   const perItemAssemblyDuration = chaosDuration / numPaths;
 
-  const dotsPhaseEnd = dotsDuration * 0.5;
-  const linesPhaseEnd = dotsDuration;
-  const assemblyEndTime = isFragmented ? dotsDuration + chaosDuration : 0;
+  const dotsPhaseEnd = chartPhaseEndTime + dotsDuration * 0.5;
+  const linesPhaseEnd = chartPhaseEndTime + dotsDuration;
+  // Skip assembly phase when chart intro handles the transition
+  const needsAssembly = isFragmented && !shouldShowChartIntro;
+  const assemblyEndTime = needsAssembly
+    ? chartPhaseEndTime + dotsDuration + chaosDuration
+    : chartPhaseEndTime + dotsDuration;
   const flowBeginTime = assemblyEndTime + flowDelay;
   const totalDuration = flowBeginTime + flowDuration;
 
@@ -357,19 +488,120 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
         </radialGradient>
       </defs>
 
+      {/* Chart intro layer - time series visualization */}
+      {shouldShowChartIntro && chartPositions.length > 0 && (
+        <g className="chart-intro">
+          {/* Connecting line between all dots */}
+          <polyline
+            points={chartPositions.map(p => `${p.x},${p.y}`).join(' ')}
+            fill="none"
+            stroke={color}
+            strokeWidth={strokeWidth * 0.75}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0"
+          >
+            {/* Fade in */}
+            <animate
+              attributeName="opacity"
+              from="0"
+              to="0.6"
+              dur="0.3s"
+              begin="0s"
+              fill="freeze"
+            />
+            {/* Fade out */}
+            <animate
+              attributeName="opacity"
+              from="0.6"
+              to="0"
+              dur={`${chartLineFadeDuration}s`}
+              begin={`${chartDuration}s`}
+              fill="freeze"
+            />
+          </polyline>
+
+          {/* Chart dots that animate to target positions */}
+          {chartPositions.map((chartPos, index) => {
+            const targetPos = dotTargetPositions[index];
+            if (!targetPos) return null;
+
+            const dotRadius = strokeWidth;
+            const dotAppearDelay = (index / chartPositions.length) * 0.5; // Stagger appearance
+            const transitionBegin = chartDuration + chartLineFadeDuration + chartPauseDuration;
+
+            return (
+              <circle
+                key={`chart-dot-${index}`}
+                cx={chartPos.x}
+                cy={chartPos.y}
+                r={dotRadius}
+                fill={color}
+                opacity="0"
+              >
+                {/* Fade in with stagger */}
+                <animate
+                  attributeName="opacity"
+                  from="0"
+                  to="1"
+                  dur="0.15s"
+                  begin={`${dotAppearDelay}s`}
+                  fill="freeze"
+                />
+                {/* Move to target position */}
+                <animate
+                  attributeName="cx"
+                  from={chartPos.x}
+                  to={targetPos.x}
+                  dur={`${chartTransitionDuration}s`}
+                  begin={`${transitionBegin}s`}
+                  fill="freeze"
+                  calcMode="spline"
+                  keySplines="0.4 0 0.2 1"
+                  keyTimes="0;1"
+                />
+                <animate
+                  attributeName="cy"
+                  from={chartPos.y}
+                  to={targetPos.y}
+                  dur={`${chartTransitionDuration}s`}
+                  begin={`${transitionBegin}s`}
+                  fill="freeze"
+                  calcMode="spline"
+                  keySplines="0.4 0 0.2 1"
+                  keyTimes="0;1"
+                />
+                {/* Fade out when lines start drawing (synced with original endpoint dot timing) */}
+                <animate
+                  attributeName="opacity"
+                  from="1"
+                  to="0"
+                  dur="0.2s"
+                  begin={`${dotsPhaseEnd + (index + 1) * perItemLinesDuration}s`}
+                  fill="freeze"
+                />
+              </circle>
+            );
+          })}
+        </g>
+      )}
+
       {/* Paths layer */}
       <g className="opentype-paths">
         {resolvedPaths.map((path, index) => {
           const offset = fragmentOffsets[index];
           const dotRadius = strokeWidth / 2;
 
+          // Skip fragment offset when chart intro handles the transition
+          const useFragmentOffset = isFragmented && !shouldShowChartIntro;
+
           return (
             <g
               key={path.id}
-              transform={isFragmented ? `translate(${offset.x}, ${offset.y})` : undefined}
+              transform={useFragmentOffset ? `translate(${offset.x}, ${offset.y})` : undefined}
             >
-              {/* Endpoint dots for fragmented mode */}
-              {isFragmented && (
+              {/* Endpoint dots for fragmented mode (skip if chart intro handles this) */}
+              {isFragmented && !shouldShowChartIntro && (
                 <>
                   <circle
                     cx={path.endpoints.start.x}
@@ -383,7 +615,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
                       from="0"
                       to="1"
                       dur="0.15s"
-                      begin={`${index * perItemDotsDuration}s`}
+                      begin={`${chartPhaseEndTime + index * perItemDotsDuration}s`}
                       fill="freeze"
                     />
                     <animate
@@ -399,54 +631,64 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
               )}
 
               {/* The path */}
-              <path
-                d={path.d}
-                fill="none"
-                stroke={color}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity={isFragmented ? 0 : 1}
-                strokeDasharray={isFragmented ? path.length : undefined}
-                strokeDashoffset={isFragmented ? path.length : undefined}
-              >
-                {isFragmented && (
-                  <>
-                    <animate
-                      attributeName="opacity"
-                      values={`0;1;1;${fadeAfterAssembly ? fadeOpacity : 1}`}
-                      keyTimes="0;0.1;0.9;1"
-                      dur={`${perItemLinesDuration + chaosDuration}s`}
-                      begin={`${dotsPhaseEnd + index * perItemLinesDuration}s`}
-                      fill="freeze"
-                    />
-                    <animate
-                      attributeName="stroke-dashoffset"
-                      from={path.length}
-                      to="0"
-                      dur={`${perItemLinesDuration}s`}
-                      begin={`${dotsPhaseEnd + index * perItemLinesDuration}s`}
-                      fill="freeze"
-                      calcMode="spline"
-                      keySplines="0.4 0 0.2 1"
-                      keyTimes="0;1"
-                    />
-                  </>
-                )}
-                {!isFragmented && fadeAfterAssembly && (
-                  <animate
-                    attributeName="opacity"
-                    from="1"
-                    to={fadeOpacity}
-                    dur="0.5s"
-                    begin={`${flowBeginTime}s`}
-                    fill="freeze"
-                  />
-                )}
-              </path>
+              {(() => {
+                // Determine animation mode
+                const shouldDrawLines = isFragmented || shouldShowChartIntro;
+                const drawDuration = shouldShowChartIntro && !isFragmented
+                  ? perItemLinesDuration
+                  : perItemLinesDuration + chaosDuration;
 
-              {/* Assembly animation */}
-              {isFragmented && (
+                return (
+                  <path
+                    d={path.d}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity={shouldDrawLines ? 0 : 1}
+                    strokeDasharray={shouldDrawLines ? path.length : undefined}
+                    strokeDashoffset={shouldDrawLines ? path.length : undefined}
+                  >
+                    {shouldDrawLines && (
+                      <>
+                        <animate
+                          attributeName="opacity"
+                          values={`0;1;1;${fadeAfterAssembly ? fadeOpacity : 1}`}
+                          keyTimes="0;0.1;0.9;1"
+                          dur={`${drawDuration}s`}
+                          begin={`${dotsPhaseEnd + index * perItemLinesDuration}s`}
+                          fill="freeze"
+                        />
+                        <animate
+                          attributeName="stroke-dashoffset"
+                          from={path.length}
+                          to="0"
+                          dur={`${perItemLinesDuration}s`}
+                          begin={`${dotsPhaseEnd + index * perItemLinesDuration}s`}
+                          fill="freeze"
+                          calcMode="spline"
+                          keySplines="0.4 0 0.2 1"
+                          keyTimes="0;1"
+                        />
+                      </>
+                    )}
+                    {!shouldDrawLines && fadeAfterAssembly && (
+                      <animate
+                        attributeName="opacity"
+                        from="1"
+                        to={fadeOpacity}
+                        dur="0.5s"
+                        begin={`${flowBeginTime}s`}
+                        fill="freeze"
+                      />
+                    )}
+                  </path>
+                );
+              })()}
+
+              {/* Assembly animation - only when fragmented WITHOUT chart intro */}
+              {useFragmentOffset && (
                 <animateTransform
                   attributeName="transform"
                   type="translate"
