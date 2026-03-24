@@ -85,6 +85,23 @@ const meta = {
       control: { type: "range", min: 0.3, max: 2, step: 0.1 },
       description: "Duration for dots to move to target positions",
     },
+    dotsPerPathUnit: {
+      control: { type: "range", min: 10, max: 200, step: 5 },
+      description: "Pixels of path length per dot (lower = more dots)",
+    },
+    minDotsPerContour: {
+      control: { type: "range", min: 1, max: 10, step: 1 },
+      description: "Minimum dots per contour",
+    },
+    maxDotsPerContour: {
+      control: { type: "range", min: 0, max: 50, step: 1 },
+      description: "Maximum dots per contour (0 = unlimited)",
+    },
+    dotDistribution: {
+      control: "select",
+      options: ["even", "endpoints", "random"],
+      description: "How dots are distributed along each contour",
+    },
     chaosDuration: {
       control: { type: "range", min: 0.5, max: 5, step: 0.25 },
     },
@@ -105,6 +122,10 @@ const meta = {
     },
     color: {
       control: "color",
+    },
+    wordColors: {
+      control: "object",
+      description: "Colors for each word (space-separated). Falls back to color if not specified.",
     },
     particleColor: {
       control: "color",
@@ -441,5 +462,171 @@ export const ChartIntroSimple: Story = {
     chartDuration: 2,
     color: "#1abc9c",
     particleColor: "#3498db",
+  },
+};
+
+// Dot Distribution Stories
+export const DenseDotsEven: Story = {
+  name: "Dense Dots: Even Distribution",
+  args: {
+    text: "DENSE",
+    fontUrl: FONTS.oswald,
+    fontSize: 72,
+    width: 350,
+    height: 130,
+    chaosMode: "fragmented",
+    dotsPerPathUnit: 15,
+    dotDistribution: "even",
+    chartPattern: "latency",
+    chartDuration: 2,
+    color: "#00ffff",
+    particleColor: "#00ff88",
+    loopDelay: 1.5,
+  },
+};
+
+export const DenseDotsEndpoints: Story = {
+  name: "Dense Dots: Endpoints Distribution",
+  args: {
+    text: "CLUSTER",
+    fontUrl: FONTS.montserrat,
+    fontSize: 56,
+    width: 450,
+    height: 120,
+    chaosMode: "fragmented",
+    dotsPerPathUnit: 20,
+    dotDistribution: "endpoints",
+    chartPattern: "cpu",
+    chartDuration: 2,
+    color: "#4a9eff",
+    particleColor: "#ffffff",
+    loopDelay: 1.5,
+  },
+};
+
+export const DenseDotsRandom: Story = {
+  name: "Dense Dots: Random Distribution",
+  args: {
+    text: "CHAOS",
+    fontUrl: FONTS.playfair,
+    fontSize: 72,
+    width: 400,
+    height: 130,
+    chaosMode: "fragmented",
+    dotsPerPathUnit: 25,
+    dotDistribution: "random",
+    chartPattern: "noise",
+    chartDuration: 2,
+    color: "#e74c3c",
+    particleColor: "#f39c12",
+    loopDelay: 1.5,
+  },
+};
+
+export const SparseDots: Story = {
+  name: "Sparse Dots (Original Behavior)",
+  args: {
+    text: "SPARSE",
+    fontUrl: FONTS.inter,
+    fontSize: 64,
+    width: 400,
+    height: 120,
+    chaosMode: "fragmented",
+    dotsPerPathUnit: 200,
+    minDotsPerContour: 1,
+    chartPattern: "latency",
+    chartDuration: 2,
+    color: "#9b59b6",
+    particleColor: "#e91e63",
+    loopDelay: 1.5,
+  },
+};
+
+export const MaxDotsLimited: Story = {
+  name: "Max Dots Limited",
+  args: {
+    text: "LIMITED",
+    fontUrl: FONTS.robotoMono,
+    fontSize: 52,
+    width: 450,
+    height: 110,
+    chaosMode: "fragmented",
+    dotsPerPathUnit: 10,
+    maxDotsPerContour: 3,
+    dotDistribution: "even",
+    chartPattern: "cpu",
+    chartDuration: 2,
+    color: "#1abc9c",
+    particleColor: "#3498db",
+    loopDelay: 1.5,
+  },
+};
+
+// Multi-word color stories
+export const PrincipalAITwoColors: Story = {
+  name: "Principal AI: Two Colors",
+  args: {
+    text: "Principal AI",
+    fontUrl: FONTS.inter,
+    fontSize: 64,
+    width: 550,
+    height: 120,
+    chaosMode: "fragmented",
+    dotsPerPathUnit: 25,
+    wordColors: ["#00ffff", "#ff6b6b"],
+    chartPattern: "latency",
+    chartDuration: 2,
+    loopDelay: 1.5,
+  },
+};
+
+export const PrincipalAIDenseColors: Story = {
+  name: "Principal AI: Dense Two Colors",
+  args: {
+    text: "Principal AI",
+    fontUrl: FONTS.inter,
+    fontSize: 64,
+    width: 550,
+    height: 120,
+    chaosMode: "fragmented",
+    dotsPerPathUnit: 15,
+    wordColors: ["#4a9eff", "#f39c12"],
+    chartPattern: "cpu",
+    chartDuration: 2.5,
+    loopDelay: 1.5,
+  },
+};
+
+export const ThreeWordColors: Story = {
+  name: "Three Word Colors",
+  args: {
+    text: "Story Based Monitoring",
+    fontUrl: FONTS.montserrat,
+    fontSize: 48,
+    width: 600,
+    height: 110,
+    chaosMode: "fragmented",
+    dotsPerPathUnit: 20,
+    wordColors: ["#e74c3c", "#2ecc71", "#3498db"],
+    chartPattern: "noise",
+    chartDuration: 2,
+    loopDelay: 1.5,
+  },
+};
+
+export const MultiWordCPUPattern: Story = {
+  name: "Multi-Word: CPU Pattern",
+  args: {
+    text: "System Metrics",
+    fontUrl: FONTS.robotoMono,
+    fontSize: 52,
+    width: 500,
+    height: 120,
+    chaosMode: "fragmented",
+    dotsPerPathUnit: 20,
+    wordColors: ["#1abc9c", "#9b59b6"],
+    chartPattern: "cpu",
+    chartDuration: 2,
+    loopDelay: 1.5,
   },
 };

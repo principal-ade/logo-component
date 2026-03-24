@@ -5,6 +5,7 @@ let globalIdCounter = 0;
 
 type ChaosMode = "none" | "fragmented";
 type ChartPattern = "latency" | "cpu" | "noise";
+type DotDistribution = "even" | "endpoints" | "random";
 
 interface OpenTypeTextRevealProps {
   /** The text to display */
@@ -35,6 +36,16 @@ interface OpenTypeTextRevealProps {
   /** Telemetry pattern style for the chart */
   chartPattern?: ChartPattern;
 
+  // Dot distribution
+  /** Pixels of path length per dot (lower = more dots). Default: 30 */
+  dotsPerPathUnit?: number;
+  /** Minimum dots per contour. Default: 1 */
+  minDotsPerContour?: number;
+  /** Maximum dots per contour (0 = unlimited). Default: 0 */
+  maxDotsPerContour?: number;
+  /** How dots are distributed along each contour. Default: "even" */
+  dotDistribution?: DotDistribution;
+
   // Chaos/assembly phase
   chaosMode?: ChaosMode;
   chaosDuration?: number;
@@ -48,6 +59,8 @@ interface OpenTypeTextRevealProps {
 
   // Styling
   color?: string;
+  /** Colors for each word (space-separated). Falls back to `color` if not specified. */
+  wordColors?: string[];
   particleColor?: string;
   strokeWidth?: number;
   opacity?: number;
@@ -65,6 +78,7 @@ interface PathInfo {
   id: string;
   length: number;
   endpoints: { start: { x: number; y: number }; end: { x: number; y: number } };
+  wordIndex: number;
 }
 
 /**
@@ -272,6 +286,82 @@ function splitPathIntoContours(d: string): string[] {
   return contours;
 }
 
+/**
+ * Sample points along an SVG path using browser's native getPointAtLength
+ */
+function samplePointsAlongPath(
+  d: string,
+  numPoints: number,
+  distribution: DotDistribution,
+  seed: number
+): Array<{ x: number; y: number }> {
+  if (numPoints <= 0) return [];
+
+  // SSR fallback: estimate points without DOM
+  if (typeof document === 'undefined') {
+    const endpoints = getPathEndpoints(d);
+    const points: Array<{ x: number; y: number }> = [];
+    for (let i = 0; i < numPoints; i++) {
+      const t = numPoints === 1 ? 0 : i / (numPoints - 1);
+      points.push({
+        x: endpoints.start.x + (endpoints.end.x - endpoints.start.x) * t,
+        y: endpoints.start.y + (endpoints.end.y - endpoints.start.y) * t,
+      });
+    }
+    return points;
+  }
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+
+  const totalLength = path.getTotalLength();
+  if (totalLength === 0) {
+    const endpoints = getPathEndpoints(d);
+    return [endpoints.start];
+  }
+
+  // Generate normalized positions (0-1) based on distribution
+  const positions: number[] = [];
+
+  switch (distribution) {
+    case "even":
+      for (let i = 0; i < numPoints; i++) {
+        positions.push(numPoints === 1 ? 0 : i / (numPoints - 1));
+      }
+      break;
+
+    case "endpoints":
+      // Concentrate more points near 0 and 1
+      for (let i = 0; i < numPoints; i++) {
+        const t = numPoints === 1 ? 0 : i / (numPoints - 1);
+        // Apply curve to cluster at ends: more samples near 0 and 1
+        const weighted = t < 0.5
+          ? 0.5 * Math.pow(2 * t, 0.5)
+          : 1 - 0.5 * Math.pow(2 * (1 - t), 0.5);
+        positions.push(weighted);
+      }
+      break;
+
+    case "random": {
+      const random = seededRandom(seed);
+      for (let i = 0; i < numPoints; i++) {
+        positions.push(random());
+      }
+      positions.sort((a, b) => a - b); // Sort for visual consistency
+      break;
+    }
+  }
+
+  // Convert positions to actual points
+  const points: Array<{ x: number; y: number }> = [];
+  for (const t of positions) {
+    const point = path.getPointAtLength(t * totalLength);
+    points.push({ x: point.x, y: point.y });
+  }
+
+  return points;
+}
+
 export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
   text,
   fontUrl,
@@ -285,6 +375,10 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
   chartPauseDuration = 0.3,
   chartTransitionDuration = 0.8,
   chartPattern = "latency",
+  dotsPerPathUnit = 30,
+  minDotsPerContour = 1,
+  maxDotsPerContour = 0,
+  dotDistribution = "even",
   chaosMode = "none",
   chaosDuration = 2,
   dotsDuration = 1.5,
@@ -293,6 +387,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
   particlesPerPath = 1,
   particleRadius = 2,
   color = "currentColor",
+  wordColors,
   particleColor,
   strokeWidth = 1.5,
   opacity = 0.9,
@@ -340,33 +435,55 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
     };
   }, [fontUrl]);
 
-  // Generate paths from font
-  const { paths, textWidth, textHeight } = useMemo(() => {
+  // Generate paths from font, tracking word indices
+  const { paths, textWidth, textHeight, wordCount } = useMemo(() => {
     if (!font) {
-      return { paths: [] as PathInfo[], textWidth: 0, textHeight: fontSize };
+      return { paths: [] as PathInfo[], textWidth: 0, textHeight: fontSize, wordCount: 0 };
     }
 
-    // Get the path for the text
-    const textPath = font.getPath(text, 0, fontSize, fontSize);
-    const pathData = textPath.toPathData(2); // 2 decimal places
+    // Split text into words and generate paths per word
+    const words = text.split(/\s+/).filter(w => w.length > 0);
+    const pathInfos: PathInfo[] = [];
+    let currentX = 0;
+    let contourIndex = 0;
 
-    // Split into individual contours (each letter shape)
-    const contours = splitPathIntoContours(pathData);
+    // Track overall bounds
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-    const pathInfos: PathInfo[] = contours.map((d, index) => ({
-      d,
-      id: `contour-${index}`,
-      length: estimatePathLength(d),
-      endpoints: getPathEndpoints(d),
-    }));
+    words.forEach((word, wordIndex) => {
+      // Get path for this word
+      const wordPath = font.getPath(word, currentX, fontSize, fontSize);
+      const pathData = wordPath.toPathData(2);
+      const contours = splitPathIntoContours(pathData);
 
-    // Calculate bounds
-    const bbox = textPath.getBoundingBox();
+      // Add contours with word index
+      contours.forEach((d) => {
+        pathInfos.push({
+          d,
+          id: `contour-${contourIndex++}`,
+          length: estimatePathLength(d),
+          endpoints: getPathEndpoints(d),
+          wordIndex,
+        });
+      });
+
+      // Update bounds
+      const bbox = wordPath.getBoundingBox();
+      minX = Math.min(minX, bbox.x1);
+      minY = Math.min(minY, bbox.y1);
+      maxX = Math.max(maxX, bbox.x2);
+      maxY = Math.max(maxY, bbox.y2);
+
+      // Advance X position for next word (add space width)
+      const spaceWidth = font.getAdvanceWidth(' ', fontSize);
+      currentX = bbox.x2 + spaceWidth;
+    });
 
     return {
       paths: pathInfos,
-      textWidth: bbox.x2 - bbox.x1,
-      textHeight: bbox.y2 - bbox.y1,
+      textWidth: maxX - minX,
+      textHeight: maxY - minY,
+      wordCount: words.length,
     };
   }, [font, text, fontSize]);
 
@@ -395,17 +512,78 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
     }));
   }, [resolvedPaths]);
 
-  // Generate chart positions for the intro animation
+  // Calculate dots per contour based on path length
+  const dotsPerContour = useMemo(() => {
+    return resolvedPaths.map(path => {
+      const rawCount = Math.round(path.length / dotsPerPathUnit);
+      const bounded = maxDotsPerContour > 0
+        ? Math.min(rawCount, maxDotsPerContour)
+        : rawCount;
+      return Math.max(minDotsPerContour, bounded);
+    });
+  }, [resolvedPaths, dotsPerPathUnit, minDotsPerContour, maxDotsPerContour]);
+
+  const totalDots = useMemo(() => {
+    return dotsPerContour.reduce((a, b) => a + b, 0);
+  }, [dotsPerContour]);
+
+  // Count dots per word for chart generation
+  const dotsPerWord = useMemo(() => {
+    const counts: number[] = [];
+    resolvedPaths.forEach((path, contourIndex) => {
+      const wordIdx = path.wordIndex;
+      while (counts.length <= wordIdx) counts.push(0);
+      counts[wordIdx] += dotsPerContour[contourIndex];
+    });
+    return counts;
+  }, [resolvedPaths, dotsPerContour]);
+
+  // Generate chart positions per word - each word gets its own full-width line
   const chartPositions = useMemo(() => {
     if (!shouldShowChartIntro) return [];
-    return generateChartPositions(resolvedPaths.length, width, height, chartPattern, 123);
-  }, [shouldShowChartIntro, resolvedPaths.length, width, height, chartPattern]);
 
-  // Target positions for dots after chart phase
-  // Always go to final letter positions (path start points)
+    const allPositions: Array<{ x: number; y: number; wordIndex: number }> = [];
+
+    dotsPerWord.forEach((numDots, wordIndex) => {
+      if (numDots === 0) return;
+      // Each word gets its own time-series spanning the full width
+      // Use different seed per word for variation
+      const wordPositions = generateChartPositions(numDots, width, height, chartPattern, 123 + wordIndex * 1000);
+      wordPositions.forEach(pos => {
+        allPositions.push({ ...pos, wordIndex });
+      });
+    });
+
+    return allPositions;
+  }, [shouldShowChartIntro, dotsPerWord, width, height, chartPattern]);
+
+  // Target positions for dots after chart phase - sampled along each contour
   const dotTargetPositions = useMemo(() => {
-    return resolvedPaths.map((path) => path.endpoints.start);
-  }, [resolvedPaths]);
+    // Group by word first to match chart positions order
+    const positionsByWord: Array<Array<{ x: number; y: number; contourIndex: number; wordIndex: number }>> = [];
+
+    resolvedPaths.forEach((path, contourIndex) => {
+      const wordIdx = path.wordIndex;
+      while (positionsByWord.length <= wordIdx) positionsByWord.push([]);
+
+      const numDots = dotsPerContour[contourIndex];
+      const sampledPoints = samplePointsAlongPath(path.d, numDots, dotDistribution, contourIndex * 1000);
+      sampledPoints.forEach(point => {
+        positionsByWord[wordIdx].push({ ...point, contourIndex, wordIndex: wordIdx });
+      });
+    });
+
+    // Flatten in word order to match chartPositions
+    return positionsByWord.flat();
+  }, [resolvedPaths, dotsPerContour, dotDistribution]);
+
+  // Helper to get color for a word index
+  const getWordColor = (wordIndex: number): string => {
+    if (wordColors && wordColors.length > 0) {
+      return wordColors[wordIndex % wordColors.length];
+    }
+    return color;
+  };
 
   // Chart intro timing
   const chartPhaseEndTime = shouldShowChartIntro
@@ -491,35 +669,49 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
       {/* Chart intro layer - time series visualization */}
       {shouldShowChartIntro && chartPositions.length > 0 && (
         <g className="chart-intro">
-          {/* Connecting line between all dots */}
-          <polyline
-            points={chartPositions.map(p => `${p.x},${p.y}`).join(' ')}
-            fill="none"
-            stroke={color}
-            strokeWidth={strokeWidth * 0.75}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0"
-          >
-            {/* Fade in */}
-            <animate
-              attributeName="opacity"
-              from="0"
-              to="0.6"
-              dur="0.3s"
-              begin="0s"
-              fill="freeze"
-            />
-            {/* Fade out */}
-            <animate
-              attributeName="opacity"
-              from="0.6"
-              to="0"
-              dur={`${chartLineFadeDuration}s`}
-              begin={`${chartDuration}s`}
-              fill="freeze"
-            />
-          </polyline>
+          {/* Connecting lines - one per word, each spanning full width */}
+          {(() => {
+            // Group chart positions by word (chartPositions now has wordIndex)
+            const positionsByWord: Map<number, Array<{ x: number; y: number }>> = new Map();
+            chartPositions.forEach((pos) => {
+              if (!positionsByWord.has(pos.wordIndex)) {
+                positionsByWord.set(pos.wordIndex, []);
+              }
+              positionsByWord.get(pos.wordIndex)!.push({ x: pos.x, y: pos.y });
+            });
+
+            return Array.from(positionsByWord.entries()).map(([wordIndex, positions]) => (
+              <polyline
+                key={`chart-line-${wordIndex}`}
+                points={positions.map(p => `${p.x},${p.y}`).join(' ')}
+                fill="none"
+                stroke={getWordColor(wordIndex)}
+                strokeWidth={strokeWidth * 0.75}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity="0"
+              >
+                {/* Fade in */}
+                <animate
+                  attributeName="opacity"
+                  from="0"
+                  to="0.6"
+                  dur="0.3s"
+                  begin="0s"
+                  fill="freeze"
+                />
+                {/* Fade out */}
+                <animate
+                  attributeName="opacity"
+                  from="0.6"
+                  to="0"
+                  dur={`${chartLineFadeDuration}s`}
+                  begin={`${chartDuration}s`}
+                  fill="freeze"
+                />
+              </polyline>
+            ));
+          })()}
 
           {/* Chart dots that animate to target positions */}
           {chartPositions.map((chartPos, index) => {
@@ -529,6 +721,9 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
             const dotRadius = strokeWidth;
             const dotAppearDelay = (index / chartPositions.length) * 0.5; // Stagger appearance
             const transitionBegin = chartDuration + chartLineFadeDuration + chartPauseDuration;
+            // Fade out when this dot's contour starts drawing
+            const contourDrawBegin = dotsPhaseEnd + (targetPos.contourIndex + 1) * perItemLinesDuration;
+            const dotColor = getWordColor(chartPos.wordIndex);
 
             return (
               <circle
@@ -536,7 +731,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
                 cx={chartPos.x}
                 cy={chartPos.y}
                 r={dotRadius}
-                fill={color}
+                fill={dotColor}
                 opacity="0"
               >
                 {/* Fade in with stagger */}
@@ -571,13 +766,13 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
                   keySplines="0.4 0 0.2 1"
                   keyTimes="0;1"
                 />
-                {/* Fade out when lines start drawing (synced with original endpoint dot timing) */}
+                {/* Fade out when this contour's line starts drawing */}
                 <animate
                   attributeName="opacity"
                   from="1"
                   to="0"
                   dur="0.2s"
-                  begin={`${dotsPhaseEnd + (index + 1) * perItemLinesDuration}s`}
+                  begin={`${contourDrawBegin}s`}
                   fill="freeze"
                 />
               </circle>
@@ -591,6 +786,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
         {resolvedPaths.map((path, index) => {
           const offset = fragmentOffsets[index];
           const dotRadius = strokeWidth / 2;
+          const pathColor = getWordColor(path.wordIndex);
 
           // Skip fragment offset when chart intro handles the transition
           const useFragmentOffset = isFragmented && !shouldShowChartIntro;
@@ -607,7 +803,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
                     cx={path.endpoints.start.x}
                     cy={path.endpoints.start.y}
                     r={dotRadius}
-                    fill={color}
+                    fill={pathColor}
                     opacity="0"
                   >
                     <animate
@@ -642,7 +838,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
                   <path
                     d={path.d}
                     fill="none"
-                    stroke={color}
+                    stroke={pathColor}
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                     strokeLinejoin="round"
