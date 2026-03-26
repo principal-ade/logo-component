@@ -626,13 +626,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
   }
 
   if (!font) {
-    return (
-      <svg width={width} height={height}>
-        <text x={10} y={30} fill={color} fontSize={14}>
-          Loading font...
-        </text>
-      </svg>
-    );
+    return null;
   }
 
   return (
