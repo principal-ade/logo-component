@@ -695,10 +695,10 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
                   from="0"
                   to="0.6"
                   dur="0.3s"
-                  begin={`${animationDelay}s`}
+                  begin="0s"
                   fill="freeze"
                 />
-                {/* Fade out */}
+                {/* Fade out - delayed by animationDelay */}
                 <animate
                   attributeName="opacity"
                   from="0.6"
@@ -717,8 +717,8 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
             if (!targetPos) return null;
 
             const dotRadius = strokeWidth;
-            const dotAppearDelay = animationDelay + (index / chartPositions.length) * 0.5; // Stagger appearance
-            const transitionBegin = animationDelay + chartDuration + chartLineFadeDuration + chartPauseDuration;
+            const dotAppearDelay = (index / chartPositions.length) * 0.5; // Stagger appearance (no delay)
+            const transitionBegin = animationDelay + chartDuration + chartLineFadeDuration + chartPauseDuration; // Transition is delayed
             // Fade out when this dot's contour starts drawing
             const contourDrawBegin = dotsPhaseEnd + (targetPos.contourIndex + 1) * perItemLinesDuration;
             const dotColor = getWordColor(chartPos.wordIndex);
