@@ -71,6 +71,9 @@ interface OpenTypeTextRevealProps {
   // Playback
   loop?: boolean;
   loopDelay?: number;
+
+  /** Delay before the animation starts (in seconds). Default: 0 */
+  animationDelay?: number;
 }
 
 interface PathInfo {
@@ -396,6 +399,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
   fadeOpacity = 0.5,
   loop = true,
   loopDelay = 1,
+  animationDelay = 0,
 }) => {
   const idRef = useRef<string | null>(null);
   if (idRef.current === null) {
@@ -585,10 +589,10 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
     return color;
   };
 
-  // Chart intro timing
-  const chartPhaseEndTime = shouldShowChartIntro
+  // Chart intro timing (add animationDelay to offset entire sequence)
+  const chartPhaseEndTime = animationDelay + (shouldShowChartIntro
     ? chartDuration + chartLineFadeDuration + chartPauseDuration + chartTransitionDuration
-    : 0;
+    : 0);
 
   // Timing calculations (offset by chart phase if present)
   const numPaths = resolvedPaths.length || 1;
@@ -691,7 +695,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
                   from="0"
                   to="0.6"
                   dur="0.3s"
-                  begin="0s"
+                  begin={`${animationDelay}s`}
                   fill="freeze"
                 />
                 {/* Fade out */}
@@ -700,7 +704,7 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
                   from="0.6"
                   to="0"
                   dur={`${chartLineFadeDuration}s`}
-                  begin={`${chartDuration}s`}
+                  begin={`${animationDelay + chartDuration}s`}
                   fill="freeze"
                 />
               </polyline>
@@ -713,8 +717,8 @@ export const OpenTypeTextReveal: React.FC<OpenTypeTextRevealProps> = ({
             if (!targetPos) return null;
 
             const dotRadius = strokeWidth;
-            const dotAppearDelay = (index / chartPositions.length) * 0.5; // Stagger appearance
-            const transitionBegin = chartDuration + chartLineFadeDuration + chartPauseDuration;
+            const dotAppearDelay = animationDelay + (index / chartPositions.length) * 0.5; // Stagger appearance
+            const transitionBegin = animationDelay + chartDuration + chartLineFadeDuration + chartPauseDuration;
             // Fade out when this dot's contour starts drawing
             const contourDrawBegin = dotsPhaseEnd + (targetPos.contourIndex + 1) * perItemLinesDuration;
             const dotColor = getWordColor(chartPos.wordIndex);
