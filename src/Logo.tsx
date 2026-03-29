@@ -4,7 +4,10 @@ interface LogoProps {
   width?: number;
   height?: number;
   color?: string;
+  /** Color for orbiting particles (defaults to color) */
   particleColor?: string;
+  /** Color for the "P" letter dots in the center (defaults to particleColor, then color) */
+  letterColor?: string;
   opacity?: number;
   /** Color for horizontal latitude lines (defaults to color) */
   horizontalColor?: string;
@@ -25,6 +28,7 @@ export const Logo: React.FC<LogoProps> = ({
   height = 150,
   color = "currentColor",
   particleColor,
+  letterColor,
   opacity = 0.9,
   horizontalColor,
   verticalColor,
@@ -34,6 +38,7 @@ export const Logo: React.FC<LogoProps> = ({
   axisColor,
 }) => {
   const finalParticleColor = particleColor || color;
+  const finalLetterColor = letterColor || particleColor || color;
   const finalHorizontalColor = horizontalColor || color;
   const finalVerticalColor = verticalColor || color;
   const finalDiagonalColor = diagonalColor || color;
@@ -95,25 +100,25 @@ export const Logo: React.FC<LogoProps> = ({
       </circle>
 
       {/* "P" made of dots at center - vertical stem */}
-      <circle cx="93" cy="85" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="90" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="95" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="100" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="105" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="110" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="115" r="2" fill={finalParticleColor} opacity="0.9" />
+      <circle cx="93" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="95" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="105" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="110" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="115" r="2" fill={finalLetterColor} opacity="0.9" />
 
       {/* "P" top horizontal */}
-      <circle cx="98" cy="85" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="103" cy="85" r="2" fill={finalParticleColor} opacity="0.9" />
+      <circle cx="98" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="103" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
 
       {/* "P" bowl - right side */}
-      <circle cx="108" cy="90" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="108" cy="95" r="2" fill={finalParticleColor} opacity="0.9" />
+      <circle cx="108" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="108" cy="95" r="2" fill={finalLetterColor} opacity="0.9" />
 
       {/* "P" bowl - middle horizontal */}
-      <circle cx="103" cy="100" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="98" cy="100" r="2" fill={finalParticleColor} opacity="0.9" />
+      <circle cx="103" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="98" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
 
       {/* Main sphere outline */}
       {showOutline && (

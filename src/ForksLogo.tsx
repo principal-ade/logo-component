@@ -4,7 +4,10 @@ interface ForksLogoProps {
   width?: number;
   height?: number;
   color?: string;
+  /** Color for orbiting particles (defaults to color) */
   particleColor?: string;
+  /** Color for the "F" letter dots in the center (defaults to particleColor, then color) */
+  letterColor?: string;
   opacity?: number;
 }
 
@@ -13,9 +16,11 @@ export const ForksLogo: React.FC<ForksLogoProps> = ({
   height = 150,
   color = "currentColor",
   particleColor,
+  letterColor,
   opacity = 0.9,
 }) => {
   const finalParticleColor = particleColor || color;
+  const finalLetterColor = letterColor || particleColor || color;
   return (
     <svg
       width={width}
@@ -80,22 +85,22 @@ export const ForksLogo: React.FC<ForksLogoProps> = ({
       </circle>
 
       {/* "F" made of dots at center - vertical stem */}
-      <circle cx="93" cy="85" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="90" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="95" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="100" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="105" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="110" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="93" cy="115" r="2" fill={finalParticleColor} opacity="0.9" />
+      <circle cx="93" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="95" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="105" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="110" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="115" r="2" fill={finalLetterColor} opacity="0.9" />
 
       {/* "F" top horizontal bar */}
-      <circle cx="98" cy="85" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="103" cy="85" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="108" cy="85" r="2" fill={finalParticleColor} opacity="0.9" />
+      <circle cx="98" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="103" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="108" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
 
       {/* "F" middle horizontal bar */}
-      <circle cx="98" cy="100" r="2" fill={finalParticleColor} opacity="0.9" />
-      <circle cx="103" cy="100" r="2" fill={finalParticleColor} opacity="0.9" />
+      <circle cx="98" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="103" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
 
       {/* Main sphere outline */}
       <circle

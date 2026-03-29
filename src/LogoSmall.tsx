@@ -4,7 +4,10 @@ interface LogoSmallProps {
   width?: number;
   height?: number;
   color?: string;
+  /** Color for orbiting particles (defaults to color) */
   particleColor?: string;
+  /** Color for the "P" letter dots in the center (defaults to particleColor, then color) */
+  letterColor?: string;
   opacity?: number;
 }
 
@@ -13,9 +16,11 @@ export const LogoSmall: React.FC<LogoSmallProps> = ({
   height = 32,
   color = "currentColor",
   particleColor,
+  letterColor,
   opacity = 0.9,
 }) => {
   const finalParticleColor = particleColor || color;
+  const finalLetterColor = letterColor || particleColor || color;
   return (
     <svg
       width={width}
@@ -82,24 +87,24 @@ export const LogoSmall: React.FC<LogoSmallProps> = ({
       />
 
       {/* Larger "P" made of dots at center - vertical stem */}
-      <circle cx="90" cy="80" r="3.5" fill={finalParticleColor} opacity="0.95" />
-      <circle cx="90" cy="88" r="3.5" fill={finalParticleColor} opacity="0.95" />
-      <circle cx="90" cy="96" r="3.5" fill={finalParticleColor} opacity="0.95" />
-      <circle cx="90" cy="104" r="3.5" fill={finalParticleColor} opacity="0.95" />
-      <circle cx="90" cy="112" r="3.5" fill={finalParticleColor} opacity="0.95" />
-      <circle cx="90" cy="120" r="3.5" fill={finalParticleColor} opacity="0.95" />
+      <circle cx="90" cy="80" r="3.5" fill={finalLetterColor} opacity="0.95" />
+      <circle cx="90" cy="88" r="3.5" fill={finalLetterColor} opacity="0.95" />
+      <circle cx="90" cy="96" r="3.5" fill={finalLetterColor} opacity="0.95" />
+      <circle cx="90" cy="104" r="3.5" fill={finalLetterColor} opacity="0.95" />
+      <circle cx="90" cy="112" r="3.5" fill={finalLetterColor} opacity="0.95" />
+      <circle cx="90" cy="120" r="3.5" fill={finalLetterColor} opacity="0.95" />
 
       {/* "P" top horizontal */}
-      <circle cx="98" cy="80" r="3.5" fill={finalParticleColor} opacity="0.95" />
-      <circle cx="106" cy="80" r="3.5" fill={finalParticleColor} opacity="0.95" />
+      <circle cx="98" cy="80" r="3.5" fill={finalLetterColor} opacity="0.95" />
+      <circle cx="106" cy="80" r="3.5" fill={finalLetterColor} opacity="0.95" />
 
       {/* "P" bowl - right side */}
-      <circle cx="114" cy="88" r="3.5" fill={finalParticleColor} opacity="0.95" />
-      <circle cx="114" cy="96" r="3.5" fill={finalParticleColor} opacity="0.95" />
+      <circle cx="114" cy="88" r="3.5" fill={finalLetterColor} opacity="0.95" />
+      <circle cx="114" cy="96" r="3.5" fill={finalLetterColor} opacity="0.95" />
 
       {/* "P" bowl - bottom horizontal */}
-      <circle cx="106" cy="104" r="3.5" fill={finalParticleColor} opacity="0.95" />
-      <circle cx="98" cy="104" r="3.5" fill={finalParticleColor} opacity="0.95" />
+      <circle cx="106" cy="104" r="3.5" fill={finalLetterColor} opacity="0.95" />
+      <circle cx="98" cy="104" r="3.5" fill={finalLetterColor} opacity="0.95" />
     </svg>
   );
 };
