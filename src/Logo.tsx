@@ -21,6 +21,8 @@ interface LogoProps {
   showOutline?: boolean;
   /** Color for center axis lines (defaults to color) */
   axisColor?: string;
+  /** Whether to show the background glow effect */
+  showGlow?: boolean;
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -36,6 +38,7 @@ export const Logo: React.FC<LogoProps> = ({
   outlineColor,
   showOutline = true,
   axisColor,
+  showGlow = false,
 }) => {
   const finalParticleColor = particleColor || color;
   const finalLetterColor = letterColor || particleColor || color;
@@ -74,7 +77,9 @@ export const Logo: React.FC<LogoProps> = ({
       </defs>
 
       {/* Glow effect */}
-      <circle cx="100" cy="100" r="80" fill="url(#sphereGlow)" opacity="0.5" />
+      {showGlow && (
+        <circle cx="100" cy="100" r="80" fill="url(#sphereGlow)" opacity="0.5" />
+      )}
 
       {/* Particles behind the wireframe (back of sphere) */}
       {/* These appear first in SVG order, so they render behind the lines */}
