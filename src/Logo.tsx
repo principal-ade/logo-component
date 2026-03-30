@@ -15,7 +15,7 @@ interface LogoProps {
   verticalColor?: string;
   /** Color for diagonal grid lines (defaults to color) */
   diagonalColor?: string;
-  /** Color for the main sphere outline (defaults to color) */
+  /** Color for the main sphere outline (defaults to accentColor, then color) */
   outlineColor?: string;
   /** Whether to show the main sphere outline */
   showOutline?: boolean;
@@ -23,6 +23,8 @@ interface LogoProps {
   axisColor?: string;
   /** Whether to show the background glow effect */
   showGlow?: boolean;
+  /** Accent color for the outer sphere outline (defaults to color) */
+  accentColor?: string;
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -39,13 +41,14 @@ export const Logo: React.FC<LogoProps> = ({
   showOutline = true,
   axisColor,
   showGlow = false,
+  accentColor,
 }) => {
   const finalParticleColor = particleColor || color;
   const finalLetterColor = letterColor || particleColor || color;
   const finalHorizontalColor = horizontalColor || color;
   const finalVerticalColor = verticalColor || color;
   const finalDiagonalColor = diagonalColor || color;
-  const finalOutlineColor = outlineColor || color;
+  const finalOutlineColor = outlineColor || accentColor || color;
   const finalAxisColor = axisColor || color;
   return (
     <svg
@@ -81,29 +84,6 @@ export const Logo: React.FC<LogoProps> = ({
         <circle cx="100" cy="100" r="80" fill="url(#sphereGlow)" opacity="0.5" />
       )}
 
-      {/* Particles behind the wireframe (back of sphere) */}
-      {/* These appear first in SVG order, so they render behind the lines */}
-
-      {/* Horizontal ellipses - back portions */}
-      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="1s" path="M 0,0 A 67,27 0 1,0 -134,0 A 67,27 0 1,0 0,0" />
-        <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="1s" repeatCount="indefinite" />
-      </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="3s" path="M 0,0 A 67,53 0 1,0 -134,0 A 67,53 0 1,0 0,0" />
-        <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="3s" repeatCount="indefinite" />
-      </circle>
-
-      {/* Vertical ellipses - back portions */}
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="1.5s" path="M 0,0 A 27,67 0 1,0 0,-134 A 27,67 0 1,0 0,0" />
-        <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="1.5s" repeatCount="indefinite" />
-      </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="3.5s" path="M 0,0 A 53,67 0 1,0 0,-134 A 53,67 0 1,0 0,0" />
-        <animate attributeName="opacity" values="0;1;0.5;0;0" keyTimes="0;0.2;0.4;0.5;1" dur="8s" begin="3.5s" repeatCount="indefinite" />
-      </circle>
-
       {/* "P" made of dots at center - vertical stem */}
       <circle cx="93" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
       <circle cx="93" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
@@ -125,19 +105,6 @@ export const Logo: React.FC<LogoProps> = ({
       <circle cx="103" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
       <circle cx="98" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
 
-      {/* Main sphere outline */}
-      {showOutline && (
-        <circle
-          cx="100"
-          cy="100"
-          r="67"
-          fill="none"
-          stroke={finalOutlineColor}
-          strokeWidth="1.5"
-          opacity="0.9"
-        />
-      )}
-
       {/* Horizontal latitude lines */}
       <ellipse
         cx="100"
@@ -149,32 +116,12 @@ export const Logo: React.FC<LogoProps> = ({
         strokeWidth="1"
         opacity="0.7"
       />
-      <ellipse
-        cx="100"
-        cy="100"
-        rx="67"
-        ry="53"
-        fill="none"
-        stroke={finalHorizontalColor}
-        strokeWidth="1"
-        opacity="0.7"
-      />
 
       {/* Vertical longitude lines */}
       <ellipse
         cx="100"
         cy="100"
         rx="27"
-        ry="67"
-        fill="none"
-        stroke={finalVerticalColor}
-        strokeWidth="1"
-        opacity="0.7"
-      />
-      <ellipse
-        cx="100"
-        cy="100"
-        rx="53"
         ry="67"
         fill="none"
         stroke={finalVerticalColor}
@@ -228,29 +175,28 @@ export const Logo: React.FC<LogoProps> = ({
         transform="rotate(150 100 100)"
       />
 
+      {/* Main sphere outline - rendered after ellipses so it appears on top */}
+      {showOutline && (
+        <circle
+          cx="100"
+          cy="100"
+          r="67"
+          fill="none"
+          stroke={finalOutlineColor}
+          strokeWidth="1.5"
+          opacity="0.9"
+        />
+      )}
 
-      {/* Particles in front of the wireframe (front of sphere) */}
-      {/* These appear last in SVG order, so they render on top of the lines */}
-
-      {/* Horizontal ellipses - front portions */}
-      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="1s" path="M 0,0 A 67,27 0 1,0 -134,0 A 67,27 0 1,0 0,0" />
-        <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="1s" repeatCount="indefinite" />
-      </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="167" cy="100" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="3s" path="M 0,0 A 67,53 0 1,0 -134,0 A 67,53 0 1,0 0,0" />
-        <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="3s" repeatCount="indefinite" />
-      </circle>
-
-      {/* Vertical ellipses - front portions */}
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="1.5s" path="M 0,0 A 27,67 0 1,0 0,-134 A 27,67 0 1,0 0,0" />
-        <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="1.5s" repeatCount="indefinite" />
-      </circle>
-      <circle r="2.5" fill={finalParticleColor} cx="100" cy="167" opacity="0">
-        <animateMotion dur="8s" repeatCount="indefinite" begin="3.5s" path="M 0,0 A 53,67 0 1,0 0,-134 A 53,67 0 1,0 0,0" />
-        <animate attributeName="opacity" values="0;0;0.5;1;1;0.5;0" keyTimes="0;0.5;0.6;0.75;0.9;0.95;1" dur="8s" begin="3.5s" repeatCount="indefinite" />
-      </circle>
+      {/* Orbiting particles - rendered last so they appear on top */}
+      <g transform="translate(100, 100)">
+        <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+          <animateMotion dur="8s" repeatCount="indefinite" path="M 67,0 A 67,27 0 1,1 -67,0 A 67,27 0 1,1 67,0" />
+        </circle>
+        <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+          <animateMotion dur="8s" repeatCount="indefinite" path="M 0,-67 A 27,67 0 1,1 0,67 A 27,67 0 1,1 0,-67" />
+        </circle>
+      </g>
     </svg>
   );
 };

@@ -125,7 +125,7 @@ const ThemedLogoDemo = () => {
           horizontalColor={theme.colors.accent}
           verticalColor={theme.colors.accent}
           diagonalColor={theme.colors.accent}
-          outlineColor={theme.colors.primary}
+          outlineColor={theme.colors.accent}
           axisColor={theme.colors.textSecondary}
           opacity={0.9}
         />
