@@ -6,7 +6,7 @@ Tracks where logos are deployed across projects and the export settings used.
 
 | Property | Value |
 |----------|-------|
-| Wireframe color | `#2563EB` (blue) |
+| Wireframe color | `#E4C04A` (gold) |
 | Particle color | `#2563EB` (blue) |
 | Letter color | `#ffffff` (white) |
 | Background | `#1a1c1e` (dark) |
@@ -29,7 +29,7 @@ Tracks where logos are deployed across projects and the export settings used.
 npm run export-icon -- \
   --size=1024 \
   --name=logo-slate-gold \
-  --color=#2563EB \
+  --color=#E4C04A \
   --particle-color=#2563EB \
   --letter-color=#ffffff \
   --background=#1a1c1e \
@@ -39,7 +39,7 @@ npm run export-icon -- \
 npm run export-icon -- \
   --size=48 \
   --name=logo-slate-gold-favicon \
-  --color=#2563EB \
+  --color=#E4C04A \
   --particle-color=#2563EB \
   --letter-color=#ffffff \
   --background=#1a1c1e \
@@ -69,7 +69,7 @@ npm run export-icon -- \
 npm run export-icon -- \
   --size=1024 \
   --name=principal-ade-icon \
-  --color=#2563EB \
+  --color=#E4C04A \
   --particle-color=#2563EB \
   --letter-color=#ffffff \
   --circular-background \
@@ -107,12 +107,12 @@ python3 generate_icons.py
 **Export commands:**
 ```bash
 # PWA icons
-npm run export-icon -- --size=192 --name=icon-192x192 --color=#2563EB --particle-color=#2563EB --letter-color=#ffffff --background=#1a1c1e --density-multiplier=2
-npm run export-icon -- --size=512 --name=icon-512x512 --color=#2563EB --particle-color=#2563EB --letter-color=#ffffff --background=#1a1c1e --density-multiplier=2
+npm run export-icon -- --size=192 --name=icon-192x192 --color=#E4C04A --particle-color=#2563EB --letter-color=#ffffff --background=#1a1c1e --density-multiplier=2
+npm run export-icon -- --size=512 --name=icon-512x512 --color=#E4C04A --particle-color=#2563EB --letter-color=#ffffff --background=#1a1c1e --density-multiplier=2
 
 # Favicons
-npm run export-icon -- --size=32 --name=favicon-32x32 --color=#2563EB --particle-color=#2563EB --letter-color=#ffffff --background=#1a1c1e --density-multiplier=2
-npm run export-icon -- --size=16 --name=favicon-16x16 --color=#2563EB --particle-color=#2563EB --letter-color=#ffffff --background=#1a1c1e --density-multiplier=2
+npm run export-icon -- --size=32 --name=favicon-32x32 --color=#E4C04A --particle-color=#2563EB --letter-color=#ffffff --background=#1a1c1e --density-multiplier=2
+npm run export-icon -- --size=16 --name=favicon-16x16 --color=#E4C04A --particle-color=#2563EB --letter-color=#ffffff --background=#1a1c1e --density-multiplier=2
 ```
 
 **Copy commands:**

@@ -189,11 +189,12 @@ export const Logo: React.FC<LogoProps> = ({
       )}
 
       {/* Orbiting particles - rendered last so they appear on top */}
+      {/* cx/cy set to animation start positions so static renders show particles at edge, not center */}
       <g transform="translate(100, 100)">
-        <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+        <circle cx="67" cy="0" r="2.5" fill={finalParticleColor} opacity="0.9">
           <animateMotion dur="8s" repeatCount="indefinite" path="M 67,0 A 67,27 0 1,1 -67,0 A 67,27 0 1,1 67,0" />
         </circle>
-        <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+        <circle cx="0" cy="-67" r="2.5" fill={finalParticleColor} opacity="0.9">
           <animateMotion dur="8s" repeatCount="indefinite" path="M 0,-67 A 27,67 0 1,1 0,67 A 27,67 0 1,1 0,-67" />
         </circle>
       </g>
