@@ -53,7 +53,8 @@ npm run export-icon -- --size=512 --color=#ff00ff --svg-only
 
 - `--size <number>` – Output width and height in pixels (default: `1024`).
 - `--color <hex>` – Stroke color for the wireframe (default: `#00ffff`).
-- `--particle-color <hex>` – Particle color (defaults to `--color`).
+- `--particle-color <hex>` – Orbiting particle color (defaults to `--color`).
+- `--letter-color <hex>` – "P" letter dots color (defaults to `--particle-color`, then `--color`).
 - `--opacity <0-1>` – Overrides the root SVG opacity (default: `1`).
 - `--output <path>` – Destination directory (default: `exports`).
 - `--name <string>` – Base file name used for the exports (default: `logo`).

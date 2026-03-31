@@ -79,7 +79,8 @@ Available flags for `npm run export-icon`:
 - `--size <number>`: Output dimensions in pixels (default: 1024)
 - `--name <string>`: Base filename (default: "logo")
 - `--color <hex>`: Wireframe sphere color (default: #00ffff)
-- `--particle-color <hex>`: "P" letter color (defaults to --color)
+- `--particle-color <hex>`: Orbiting particle color (defaults to --color)
+- `--letter-color <hex>`: "P" letter dots color (defaults to --particle-color, then --color)
 - `--opacity <0-1>`: Overall opacity (default: 1)
 - `--background <hex|transparent>`: Background fill color
 - `--circular-background`: Use circular background instead of rectangular

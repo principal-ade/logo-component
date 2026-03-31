@@ -20,6 +20,7 @@ function parseArgs(argv) {
     size: DEFAULT_SIZE,
     color: DEFAULT_COLOR,
     particleColor: null,
+    letterColor: null,
     opacity: 1,
     outDir: OUTPUT_DIR,
     fileName: "logo",
@@ -58,6 +59,10 @@ function parseArgs(argv) {
         break;
       case "--particle-color":
         options.particleColor = next ?? null;
+        i++;
+        break;
+      case "--letter-color":
+        options.letterColor = next ?? null;
         i++;
         break;
       case "--opacity":
@@ -250,6 +255,7 @@ async function main() {
     height: options.size,
     color: options.color,
     particleColor: options.particleColor,
+    letterColor: options.letterColor,
     opacity: options.opacity,
   });
   let svgMarkup = renderToStaticMarkup(element);
