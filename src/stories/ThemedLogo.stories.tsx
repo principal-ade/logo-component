@@ -17,6 +17,7 @@ import {
   defaultTerminalTheme,
   landingPageTheme,
   landingPageLightTheme,
+  iceTangerineTheme,
   type Theme,
 } from "@principal-ade/industry-theme";
 
@@ -36,6 +37,7 @@ const themes: Record<string, Theme> = {
   defaultTerminal: defaultTerminalTheme,
   landingPage: landingPageTheme,
   landingPageLight: landingPageLightTheme,
+  iceTangerine: iceTangerineTheme,
 };
 
 const meta = {
@@ -62,7 +64,7 @@ const ThemedLogoDemo = () => {
         alignItems: "center",
         gap: 24,
         padding: 32,
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.text,
         minHeight: "100vh",
         minWidth: "100vw",
         boxSizing: "border-box",
@@ -120,13 +122,13 @@ const ThemedLogoDemo = () => {
           width={300}
           height={300}
           color={theme.colors.primary}
-          letterColor={theme.colors.text}
-          particleColor={theme.colors.primary}
-          horizontalColor={theme.colors.accent}
-          verticalColor={theme.colors.accent}
-          diagonalColor={theme.colors.accent}
-          outlineColor={theme.colors.accent}
-          axisColor={theme.colors.textSecondary}
+          letterColor={theme.colors.primary}
+          particleColor={theme.colors.accent}
+          horizontalColor={theme.colors.background}
+          verticalColor={theme.colors.background}
+          diagonalColor={theme.colors.background}
+          outlineColor={theme.colors.background}
+          axisColor={theme.colors.background}
           opacity={0.9}
         />
 

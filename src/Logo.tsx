@@ -84,27 +84,6 @@ export const Logo: React.FC<LogoProps> = ({
         <circle cx="100" cy="100" r="80" fill="url(#sphereGlow)" opacity="0.5" />
       )}
 
-      {/* "P" made of dots at center - vertical stem */}
-      <circle cx="93" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="95" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="105" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="110" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="115" r="2" fill={finalLetterColor} opacity="0.9" />
-
-      {/* "P" top horizontal */}
-      <circle cx="98" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="103" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
-
-      {/* "P" bowl - right side */}
-      <circle cx="108" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="108" cy="95" r="2" fill={finalLetterColor} opacity="0.9" />
-
-      {/* "P" bowl - middle horizontal */}
-      <circle cx="103" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="98" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
-
       {/* Horizontal latitude lines */}
       <ellipse
         cx="100"
@@ -188,14 +167,34 @@ export const Logo: React.FC<LogoProps> = ({
         />
       )}
 
+      {/* "P" made of dots at center - vertical stem */}
+      <circle cx="93" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="95" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="105" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="110" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="93" cy="115" r="2" fill={finalLetterColor} opacity="0.9" />
+
+      {/* "P" top horizontal */}
+      <circle cx="98" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="103" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
+
+      {/* "P" bowl - right side */}
+      <circle cx="108" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="108" cy="95" r="2" fill={finalLetterColor} opacity="0.9" />
+
+      {/* "P" bowl - middle horizontal */}
+      <circle cx="103" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
+      <circle cx="98" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
+
       {/* Orbiting particles - rendered last so they appear on top */}
-      {/* cx/cy set to animation start positions so static renders show particles at edge, not center */}
       <g transform="translate(100, 100)">
-        <circle cx="67" cy="0" r="2.5" fill={finalParticleColor} opacity="0.9">
-          <animateMotion dur="8s" repeatCount="indefinite" path="M 67,0 A 67,27 0 1,1 -67,0 A 67,27 0 1,1 67,0" />
+        <circle cx="0" cy="0" r="2.5" fill={finalParticleColor} opacity="0.9">
+          <animateMotion dur="8s" repeatCount="indefinite" path="M 67,0 A 67,27 0 0,1 -67,0 A 67,27 0 0,1 67,0" />
         </circle>
-        <circle cx="0" cy="-67" r="2.5" fill={finalParticleColor} opacity="0.9">
-          <animateMotion dur="8s" repeatCount="indefinite" path="M 0,-67 A 27,67 0 1,1 0,67 A 27,67 0 1,1 0,-67" />
+        <circle cx="0" cy="0" r="2.5" fill={finalParticleColor} opacity="0.9">
+          <animateMotion dur="8s" repeatCount="indefinite" path="M 0,-67 A 27,67 0 0,1 0,67 A 27,67 0 0,1 0,-67" />
         </circle>
       </g>
     </svg>
