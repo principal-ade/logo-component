@@ -11,6 +11,27 @@ Tracks where logos are deployed across projects and the export settings used.
 | Letter color | `#ffffff` (white) |
 | Background | `#1a1c1e` (dark) |
 
+## Theme: Ice Tangerine Inverted
+
+| Property | Value |
+|----------|-------|
+| Wireframe color | `#ff6b35` (orange/tangerine) |
+| Particle color | `#e8f4f6` (light cyan/muted) |
+| Letter color | `#e8f4f6` (light cyan/muted) |
+| Background | `#0c1741` (dark blue) |
+
+**Export command:**
+```bash
+npm run export-icon -- \
+  --size=1024 \
+  --name=logo-ice-tangerine-inverted \
+  --color=#ff6b35 \
+  --particle-color=#e8f4f6 \
+  --letter-color=#e8f4f6 \
+  --background=#0c1741 \
+  --density-multiplier=1
+```
+
 ## Deployments
 
 ### Mobile App

@@ -289,10 +289,20 @@ async function main() {
   if (options.background && options.background.alpha > 0) {
     const { r, g, b, alpha } = options.background;
     const bgColor = `rgba(${r},${g},${b},${alpha})`;
+    // Calculate background rect coordinates based on padding
+    let bgElement;
+    if (options.circularBackground) {
+      bgElement = `<circle cx="100" cy="100" r="70" fill="${bgColor}" shape-rendering="geometricPrecision"/>`;
+    } else if (options.padding !== null) {
+      const circleRadius = 67;
+      const circleCenter = 100;
+      const minCoord = circleCenter - circleRadius - options.padding;
+      const viewSize = (circleRadius + options.padding) * 2;
+      bgElement = `<rect x="${minCoord}" y="${minCoord}" width="${viewSize}" height="${viewSize}" fill="${bgColor}"/>`;
+    } else {
+      bgElement = `<rect width="100%" height="100%" fill="${bgColor}"/>`;
+    }
     // Insert background right after the opening <svg> tag
-    const bgElement = options.circularBackground
-      ? `<circle cx="100" cy="100" r="70" fill="${bgColor}" shape-rendering="geometricPrecision"/>`
-      : `<rect width="100%" height="100%" fill="${bgColor}"/>`;
     svgMarkup = svgMarkup.replace(
       /(<svg[^>]*>)/,
       `$1${bgElement}`
