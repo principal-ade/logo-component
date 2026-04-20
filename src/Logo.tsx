@@ -6,7 +6,7 @@ interface LogoProps {
   color?: string;
   /** Color for orbiting particles (defaults to color) */
   particleColor?: string;
-  /** Color for the "P" letter dots in the center (defaults to particleColor, then color) */
+  /** Color for the "P" letter in the center (defaults to particleColor, then color) */
   letterColor?: string;
   opacity?: number;
   /** Color for horizontal latitude lines (defaults to color) */
@@ -25,6 +25,12 @@ interface LogoProps {
   showGlow?: boolean;
   /** Accent color for the outer sphere outline (defaults to color) */
   accentColor?: string;
+  /** Use a text-based P instead of dots (defaults to false) */
+  useTextLetter?: boolean;
+  /** Font family for text-based P (defaults to Georgia) */
+  letterFontFamily?: string;
+  /** Background color for the SVG */
+  backgroundColor?: string;
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -42,6 +48,9 @@ export const Logo: React.FC<LogoProps> = ({
   axisColor,
   showGlow = false,
   accentColor,
+  useTextLetter = false,
+  letterFontFamily = "Georgia, serif",
+  backgroundColor,
 }) => {
   const finalParticleColor = particleColor || color;
   const finalLetterColor = letterColor || particleColor || color;
@@ -77,19 +86,35 @@ export const Logo: React.FC<LogoProps> = ({
           </stop>
           <stop offset="100%" style={{ stopColor: color, stopOpacity: 0 }} />
         </radialGradient>
+
       </defs>
+
+      {/* Background */}
+      {backgroundColor && (
+        <rect x="30" y="30" width="140" height="140" fill={backgroundColor} />
+      )}
 
       {/* Glow effect */}
       {showGlow && (
         <circle cx="100" cy="100" r="80" fill="url(#sphereGlow)" opacity="0.5" />
       )}
 
+      {/* Crosshair lines from edge to ellipses */}
+      {/* Top */}
+      <line x1="100" y1="33" x2="100" y2="68" stroke={finalAxisColor} strokeWidth="1" opacity="0.7" />
+      {/* Bottom */}
+      <line x1="100" y1="167" x2="100" y2="132" stroke={finalAxisColor} strokeWidth="1" opacity="0.7" />
+      {/* Left */}
+      <line x1="33" y1="100" x2="68" y2="100" stroke={finalAxisColor} strokeWidth="1" opacity="0.7" />
+      {/* Right */}
+      <line x1="167" y1="100" x2="132" y2="100" stroke={finalAxisColor} strokeWidth="1" opacity="0.7" />
+
       {/* Horizontal latitude lines */}
       <ellipse
         cx="100"
         cy="100"
         rx="67"
-        ry="27"
+        ry="32"
         fill="none"
         stroke={finalHorizontalColor}
         strokeWidth="1"
@@ -100,7 +125,7 @@ export const Logo: React.FC<LogoProps> = ({
       <ellipse
         cx="100"
         cy="100"
-        rx="27"
+        rx="32"
         ry="67"
         fill="none"
         stroke={finalVerticalColor}
@@ -113,7 +138,7 @@ export const Logo: React.FC<LogoProps> = ({
         cx="100"
         cy="100"
         rx="67"
-        ry="35"
+        ry="40"
         fill="none"
         stroke={finalDiagonalColor}
         strokeWidth="1"
@@ -124,7 +149,7 @@ export const Logo: React.FC<LogoProps> = ({
         cx="100"
         cy="100"
         rx="67"
-        ry="35"
+        ry="40"
         fill="none"
         stroke={finalDiagonalColor}
         strokeWidth="1"
@@ -135,7 +160,7 @@ export const Logo: React.FC<LogoProps> = ({
         cx="100"
         cy="100"
         rx="67"
-        ry="35"
+        ry="40"
         fill="none"
         stroke={finalDiagonalColor}
         strokeWidth="1"
@@ -146,7 +171,7 @@ export const Logo: React.FC<LogoProps> = ({
         cx="100"
         cy="100"
         rx="67"
-        ry="35"
+        ry="40"
         fill="none"
         stroke={finalDiagonalColor}
         strokeWidth="1"
@@ -167,34 +192,82 @@ export const Logo: React.FC<LogoProps> = ({
         />
       )}
 
-      {/* "P" made of dots at center - vertical stem */}
-      <circle cx="93" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="95" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="105" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="110" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="93" cy="115" r="2" fill={finalLetterColor} opacity="0.9" />
+      {/* "P" letter at center */}
+      {useTextLetter ? (
+        <text
+          x="100"
+          y="100"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill={finalLetterColor}
+          fontSize="48"
+          fontFamily={letterFontFamily}
+          fontWeight="bold"
+          opacity="0.9"
+        >
+          P
+        </text>
+      ) : (
+        <>
+          {/* "P" made of dots - vertical stem */}
+          <circle cx="90" cy="79" r="2.5" fill={finalLetterColor} opacity="0.9" />
+          <circle cx="90" cy="86" r="2.5" fill={finalLetterColor} opacity="0.9" />
+          <circle cx="90" cy="93" r="2.5" fill={finalLetterColor} opacity="0.9" />
+          <circle cx="90" cy="100" r="2.5" fill={finalLetterColor} opacity="0.9" />
+          <circle cx="90" cy="107" r="2.5" fill={finalLetterColor} opacity="0.9" />
+          <circle cx="90" cy="114" r="2.5" fill={finalLetterColor} opacity="0.9" />
+          <circle cx="90" cy="121" r="2.5" fill={finalLetterColor} opacity="0.9" />
 
-      {/* "P" top horizontal */}
-      <circle cx="98" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="103" cy="85" r="2" fill={finalLetterColor} opacity="0.9" />
+          {/* "P" top horizontal */}
+          <circle cx="97" cy="79" r="2.5" fill={finalLetterColor} opacity="0.9" />
+          <circle cx="104" cy="79" r="2.5" fill={finalLetterColor} opacity="0.9" />
 
-      {/* "P" bowl - right side */}
-      <circle cx="108" cy="90" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="108" cy="95" r="2" fill={finalLetterColor} opacity="0.9" />
+          {/* "P" bowl - right side */}
+          <circle cx="111" cy="86" r="2.5" fill={finalLetterColor} opacity="0.9" />
+          <circle cx="111" cy="93" r="2.5" fill={finalLetterColor} opacity="0.9" />
 
-      {/* "P" bowl - middle horizontal */}
-      <circle cx="103" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
-      <circle cx="98" cy="100" r="2" fill={finalLetterColor} opacity="0.9" />
+          {/* "P" bowl - middle horizontal */}
+          <circle cx="104" cy="100" r="2.5" fill={finalLetterColor} opacity="0.9" />
+          <circle cx="97" cy="100" r="2.5" fill={finalLetterColor} opacity="0.9" />
+        </>
+      )}
 
       {/* Orbiting particles - rendered last so they appear on top */}
-      <g transform="translate(100, 100)">
-        <circle cx="0" cy="0" r="2.5" fill={finalParticleColor} opacity="0.9">
-          <animateMotion dur="8s" repeatCount="indefinite" path="M 67,0 A 67,27 0 0,1 -67,0 A 67,27 0 0,1 67,0" />
+      {/* Particle on horizontal latitude ellipse - forward */}
+      <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+        <animateMotion dur="8s" repeatCount="indefinite" path="M 167,100 A 67,32 0 0,1 33,100 A 67,32 0 0,1 167,100" />
+      </circle>
+
+      {/* Particle on vertical longitude ellipse - backward */}
+      <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+        <animateMotion dur="8s" repeatCount="indefinite" path="M 100,33 A 32,67 0 0,0 100,167 A 32,67 0 0,0 100,33" />
+      </circle>
+
+      {/* Particle on diagonal ellipse (30°) - forward */}
+      <g transform="rotate(30 100 100)">
+        <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+          <animateMotion dur="8s" repeatCount="indefinite" path="M 167,100 A 67,40 0 0,1 33,100 A 67,40 0 0,1 167,100" />
         </circle>
-        <circle cx="0" cy="0" r="2.5" fill={finalParticleColor} opacity="0.9">
-          <animateMotion dur="8s" repeatCount="indefinite" path="M 0,-67 A 27,67 0 0,1 0,67 A 27,67 0 0,1 0,-67" />
+      </g>
+
+      {/* Particle on diagonal ellipse (60°) - backward */}
+      <g transform="rotate(60 100 100)">
+        <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+          <animateMotion dur="8s" repeatCount="indefinite" path="M 167,100 A 67,40 0 0,0 33,100 A 67,40 0 0,0 167,100" />
+        </circle>
+      </g>
+
+      {/* Particle on diagonal ellipse (120°) - forward */}
+      <g transform="rotate(120 100 100)">
+        <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+          <animateMotion dur="8s" repeatCount="indefinite" path="M 167,100 A 67,40 0 0,1 33,100 A 67,40 0 0,1 167,100" />
+        </circle>
+      </g>
+
+      {/* Particle on diagonal ellipse (150°) - backward */}
+      <g transform="rotate(150 100 100)">
+        <circle r="2.5" fill={finalParticleColor} opacity="0.9">
+          <animateMotion dur="8s" repeatCount="indefinite" path="M 167,100 A 67,40 0 0,0 33,100 A 67,40 0 0,0 167,100" />
         </circle>
       </g>
     </svg>
