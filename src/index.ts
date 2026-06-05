@@ -6,6 +6,8 @@ export { WreathLogo } from './WreathLogo';
 export { TelemetryReveal } from './TelemetryReveal';
 export { TextReveal } from './TextReveal';
 export { OpenTypeTextReveal } from './OpenTypeTextReveal';
+export { TrailCityDiagram } from './TrailCityDiagram';
+export type { TrailCityDiagramProps } from './TrailCityDiagram';
 export { TELEMETRY_PRESETS } from './presets';
 export { STROKE_CHARACTERS, layoutText } from './strokeCharacters';
 export type { PathDefinition, ShapePreset } from './presets';
