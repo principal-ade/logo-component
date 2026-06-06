@@ -6,8 +6,16 @@ export { TextReveal } from './TextReveal';
 export { OpenTypeTextReveal } from './OpenTypeTextReveal';
 export { TrailCityDiagram } from './TrailCityDiagram';
 export type { TrailCityDiagramProps } from './TrailCityDiagram';
-export { FileCityLogo } from './FileCityLogo';
-export type { FileCityLogoProps, FileCityMark, FileCityGradient } from './FileCityLogo';
+export { FileCityLogo, FileCityPanel, computeFileCityLayout, fileCityLabel } from './FileCityLogo';
+export type {
+  FileCityLogoProps,
+  FileCityMark,
+  FileCityGradient,
+  FileCityCell,
+  FileCityLayout,
+} from './FileCityLogo';
+export { FileCityLogoAnimated } from './FileCityLogoAnimated';
+export type { FileCityLogoAnimatedProps } from './FileCityLogoAnimated';
 export { TELEMETRY_PRESETS } from './presets';
 export { STROKE_CHARACTERS, layoutText } from './strokeCharacters';
 export type { PathDefinition, ShapePreset } from './presets';

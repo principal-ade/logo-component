@@ -181,15 +181,50 @@ function mix(a: string, b: string, t: number): string {
 }
 
 /**
- * A compact, iconic "file city" mark — the same top-down grid of file
- * squares as {@link TrailCityDiagram}, distilled to a logo: a small grid
- * of smaller buildings, no trail / markers / snippet. The primary-colored
- * files spell out the brand mark (P / AI / PAI) so the letters emerge
- * from the muted city.
+ * One rendered grid square of the file-city mark, with everything needed
+ * to draw it statically or animate it: its position, final fill / stroke,
+ * whether it belongs to the letter, and a `weight` (how strongly it
+ * contributes to the mark — letter files weigh more than city files) that
+ * the animated variant uses to decide how many "samples" a cell needs
+ * before it reaches full intensity.
  */
-export const FileCityLogo: React.FC<FileCityLogoProps> = ({
-  width = 150,
-  height = 150,
+export interface FileCityCell {
+  key: string;
+  c: number;
+  r: number;
+  x: number;
+  y: number;
+  sq: number;
+  rx: number;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+  isLetter: boolean;
+  weight: number;
+}
+
+/**
+ * The resolved geometry + palette for a {@link FileCityLogo}, shared by the
+ * static component and {@link FileCityLogoAnimated} so the two never drift.
+ */
+export interface FileCityLayout {
+  /** Grid squares, post skip/void culling, in render order. */
+  cells: FileCityCell[];
+  /** Overlay nodes (trail path/dots, AI card) drawn above the grid. */
+  extras: React.ReactNode[];
+  bgColor: string;
+  baseColor: string;
+  rounded: boolean;
+  opacity: number;
+  mark: FileCityMark;
+}
+
+/**
+ * Compute the full layout (cells + overlays + palette) for a file-city
+ * mark from the public props. Pure — no hooks — so both the static and
+ * animated components can build their SVG from the identical cell list.
+ */
+export function computeFileCityLayout({
   mark = 'P',
   primary,
   accent,
@@ -204,8 +239,7 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
   margin = 1,
   aiCard = false,
   opacity = 0.9,
-}) => {
-  const uid = useId().replace(/:/g, '');
+}: FileCityLogoProps): FileCityLayout {
   const primaryColor = primary ?? theme?.colors.primary ?? '#22d3ee';
   const accentColor = accent ?? theme?.colors.accent ?? primaryColor;
   const baseColor = color ?? theme?.colors.text ?? '#f8fafc';
@@ -390,7 +424,8 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
   const startY = (VIEW - cell * rows) / 2;
 
   const rng = mulberry32(7);
-  const files: React.ReactNode[] = [];
+  const cellsOut: FileCityCell[] = [];
+  const extras: React.ReactNode[] = [];
   // Track the previous cell to the left (per row) and above (per column)
   // so we never leave two empty squares back to back in either
   // direction — that's what produced the long blank runs.
@@ -434,23 +469,24 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
           : gradientShade(baseFor(kind), c, r);
       const x = startX + c * cell + inset;
       const y = startY + r * cell + inset;
-      files.push(
-        <rect
-          key={`${c}-${r}`}
-          x={x}
-          y={y}
-          width={sq}
-          height={sq}
-          rx={Math.max(1, sq * 0.12)}
-          fill={
-            isLetter
-              ? letterFill
-              : palette[Math.floor(colorRoll * palette.length)]
-          }
-          stroke={isLetter ? withAlpha(letterColor, 0.55) : withAlpha(baseColor, 0.08)}
-          strokeWidth={isLetter ? 0.6 : 0.4}
-        />,
-      );
+      cellsOut.push({
+        key: `${c}-${r}`,
+        c,
+        r,
+        x,
+        y,
+        sq,
+        rx: Math.max(1, sq * 0.12),
+        fill: isLetter
+          ? letterFill
+          : palette[Math.floor(colorRoll * palette.length)],
+        stroke: isLetter ? withAlpha(letterColor, 0.55) : withAlpha(baseColor, 0.08),
+        strokeWidth: isLetter ? 0.6 : 0.4,
+        isLetter,
+        // Letter files weigh the most so they build up over several
+        // samples; city files weigh less and resolve in one or two hits.
+        weight: isLetter ? 1 : 0.4,
+      });
     }
   }
 
@@ -481,7 +517,7 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
     const turnX = startX + 2.5 * cell;             // center of the 3rd column
     const dot = Math.max(1, cell * 0.12);
     const leaderPath = `M ${aX} ${aY} L ${aX} ${valleyY} L ${turnX} ${valleyY} L ${turnX} ${bY} L ${bX} ${bY}`;
-    files.push(
+    extras.push(
       <g key="ai-leader" opacity={0.75}>
         <path
           d={leaderPath}
@@ -496,7 +532,7 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
         <circle cx={bX} cy={bY} r={dot} fill={accentColor} />
       </g>,
     );
-    files.push(
+    extras.push(
       <g key="ai-card">
         <rect
           x={cx0}
@@ -546,7 +582,7 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
     const linePts = trailGrid.map(([c, r]) => centerOf(c, r));
     const d = linePts.map((p, i) => `${i ? 'L' : 'M'} ${p.x} ${p.y}`).join(' ');
     const dot = Math.max(1.5, sq * 0.3);
-    files.push(
+    extras.push(
       <path
         key="trail-path"
         d={d}
@@ -561,7 +597,7 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
     );
     trailGrid.forEach(([c, r], i) => {
       const p = centerOf(c, r);
-      files.push(
+      extras.push(
         <circle
           key={`trail-dot-${i}`}
           cx={p.x}
@@ -575,6 +611,32 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
     });
   }
 
+  return { cells: cellsOut, extras, bgColor, baseColor, rounded, opacity, mark };
+}
+
+/** Accessible label for a given mark, shared by both components. */
+export function fileCityLabel(mark: FileCityMark): string {
+  return mark === 'none'
+    ? 'A top-down grid of file squares'
+    : `A top-down grid of file squares spelling ${mark}`;
+}
+
+/**
+ * SVG panel chrome shared by the static and animated components: the
+ * rounded background panel (clipping its children) and the edge hairline.
+ * `children` are the grid + overlays drawn inside the clip.
+ */
+export const FileCityPanel: React.FC<{
+  width: number;
+  height: number;
+  bgColor: string;
+  baseColor: string;
+  rounded: boolean;
+  opacity: number;
+  label: string;
+  children: React.ReactNode;
+}> = ({ width, height, bgColor, baseColor, rounded, opacity, label, children }) => {
+  const uid = useId().replace(/:/g, '');
   return (
     <svg
       width={width}
@@ -583,11 +645,7 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
       xmlns="http://www.w3.org/2000/svg"
       style={{ opacity, display: 'block', overflow: 'visible' }}
       role="img"
-      aria-label={
-        mark === 'none'
-          ? 'A top-down grid of file squares'
-          : `A top-down grid of file squares spelling ${mark}`
-      }
+      aria-label={label}
     >
       <defs>
         <clipPath id={`panel-${uid}`}>
@@ -596,7 +654,7 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
       </defs>
       <g clipPath={`url(#panel-${uid})`}>
         <rect x={0} y={0} width={VIEW} height={VIEW} fill={bgColor} rx={rounded ? PANEL_RADIUS : 0} />
-        {files}
+        {children}
       </g>
       {/* Hairline tracing the panel edge so the icon stays defined against
           both light and dark dock backgrounds. Inset by half its width so
@@ -612,5 +670,44 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
         strokeWidth={HAIRLINE}
       />
     </svg>
+  );
+};
+
+/**
+ * A compact, iconic "file city" mark — the same top-down grid of file
+ * squares as {@link TrailCityDiagram}, distilled to a logo: a small grid
+ * of smaller buildings, no trail / markers / snippet. The primary-colored
+ * files spell out the brand mark (P / AI / PAI) so the letters emerge
+ * from the muted city.
+ */
+export const FileCityLogo: React.FC<FileCityLogoProps> = (props) => {
+  const { width = 150, height = 150 } = props;
+  const { cells, extras, bgColor, baseColor, rounded, opacity, mark } =
+    computeFileCityLayout(props);
+  return (
+    <FileCityPanel
+      width={width}
+      height={height}
+      bgColor={bgColor}
+      baseColor={baseColor}
+      rounded={rounded}
+      opacity={opacity}
+      label={fileCityLabel(mark)}
+    >
+      {cells.map((cell) => (
+        <rect
+          key={cell.key}
+          x={cell.x}
+          y={cell.y}
+          width={cell.sq}
+          height={cell.sq}
+          rx={cell.rx}
+          fill={cell.fill}
+          stroke={cell.stroke}
+          strokeWidth={cell.strokeWidth}
+        />
+      ))}
+      {extras}
+    </FileCityPanel>
   );
 };
