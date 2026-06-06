@@ -73,6 +73,15 @@ export interface FileCityLogoProps {
 }
 
 const VIEW = 100;
+// Corner radius for the rounded panel, as a fraction of the panel side.
+// macOS app icons use a ~22.4% continuous-corner ("squircle") radius; the
+// Electron app supplies the transparent safe-area padding, so the panel
+// fills the whole viewBox and just needs the right corner curvature to
+// read as a native dock icon. A plain SVG rx is a close approximation.
+const PANEL_RADIUS = VIEW * 0.2237;
+// Width of the edge hairline (in viewBox units) that keeps the icon
+// defined against the dock background.
+const HAIRLINE = 0.75;
 
 // 5-row pixel glyphs — the primary-colored files trace these.
 //   `1` = a mark (primary) file
@@ -465,13 +474,26 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
     >
       <defs>
         <clipPath id={`panel-${uid}`}>
-          <rect x={0} y={0} width={VIEW} height={VIEW} rx={rounded ? 14 : 0} />
+          <rect x={0} y={0} width={VIEW} height={VIEW} rx={rounded ? PANEL_RADIUS : 0} />
         </clipPath>
       </defs>
       <g clipPath={`url(#panel-${uid})`}>
-        <rect x={0} y={0} width={VIEW} height={VIEW} fill={bgColor} rx={rounded ? 14 : 0} />
+        <rect x={0} y={0} width={VIEW} height={VIEW} fill={bgColor} rx={rounded ? PANEL_RADIUS : 0} />
         {files}
       </g>
+      {/* Hairline tracing the panel edge so the icon stays defined against
+          both light and dark dock backgrounds. Inset by half its width so
+          the whole stroke sits inside the canvas, radius reduced to match. */}
+      <rect
+        x={HAIRLINE / 2}
+        y={HAIRLINE / 2}
+        width={VIEW - HAIRLINE}
+        height={VIEW - HAIRLINE}
+        rx={rounded ? Math.max(0, PANEL_RADIUS - HAIRLINE / 2) : 0}
+        fill="none"
+        stroke={withAlpha(baseColor, 0.14)}
+        strokeWidth={HAIRLINE}
+      />
     </svg>
   );
 };

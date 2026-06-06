@@ -18,6 +18,7 @@ import {
 } from "@principal-ade/industry-theme";
 
 const themes: Record<string, Theme> = {
+  iceTangerineDark: iceTangerineDarkTheme,
   terminal: terminalTheme,
   regal: regalTheme,
   matrix: matrixTheme,
@@ -30,11 +31,21 @@ const themes: Record<string, Theme> = {
   iceTangerine: iceTangerineTheme,
 };
 
+/** The brand default theme for the logo. */
+const defaultTheme = iceTangerineDarkTheme;
+
 const meta = {
   title: "Components/FileCityLogo",
   component: FileCityLogo,
   parameters: {
     layout: "centered",
+    backgrounds: {
+      default: "brand",
+      values: [
+        { name: "brand", value: "#081a33" },
+        { name: "light", value: "#ffffff" },
+      ],
+    },
   },
   tags: ["autodocs"],
 } satisfies Meta<typeof FileCityLogo>;
@@ -44,7 +55,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    theme: slateNeonTheme,
+    theme: defaultTheme,
     mark: "P",
     width: 200,
     height: 200,
@@ -55,7 +66,7 @@ export const Default: Story = {
  *  the right three columns. */
 export const Lockup: Story = {
   args: {
-    theme: slateNeonTheme,
+    theme: defaultTheme,
     mark: "lockup",
     width: 220,
     height: 220,
@@ -110,7 +121,7 @@ export const Gradients: Story = {
       {(["scatter", "vertical", "horizontal", "diagonal"] as const).map((g) => (
         <div key={g} style={{ textAlign: "center" }}>
           <FileCityLogo
-            theme={slateNeonTheme}
+            theme={defaultTheme}
             mark="P"
             gradient={g}
             width={160}
@@ -132,7 +143,7 @@ export const LockupGradients: Story = {
       {(["scatter", "vertical", "horizontal", "diagonal"] as const).map((g) => (
         <div key={g} style={{ textAlign: "center" }}>
           <FileCityLogo
-            theme={slateNeonTheme}
+            theme={defaultTheme}
             mark="lockup"
             gradient={g}
             width={160}
@@ -151,7 +162,7 @@ export const LockupGradients: Story = {
  *  become a dashed path with marker dots. */
 export const WithTrail: Story = {
   args: {
-    theme: slateNeonTheme,
+    theme: defaultTheme,
     mark: "P",
     trail: true,
     width: 200,
@@ -166,7 +177,7 @@ export const Marks: Story = {
     <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
       {(["P", "AI", "PAI", "none"] as const).map((m) => (
         <div key={m} style={{ textAlign: "center" }}>
-          <FileCityLogo theme={slateNeonTheme} mark={m} width={160} height={160} />
+          <FileCityLogo theme={defaultTheme} mark={m} width={160} height={160} />
           <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>mark="{m}"</div>
         </div>
       ))}
@@ -177,7 +188,7 @@ export const Marks: Story = {
 /** Plain city grid, no highlighted file. */
 export const PlainCity: Story = {
   args: {
-    theme: slateNeonTheme,
+    theme: defaultTheme,
     mark: "none",
     width: 200,
     height: 200,
@@ -188,7 +199,7 @@ export const PlainCity: Story = {
 /** Transparent panel — drop the mark onto any surface. */
 export const Transparent: Story = {
   args: {
-    theme: slateNeonTheme,
+    theme: defaultTheme,
     width: 200,
     height: 200,
     background: "transparent",
@@ -206,7 +217,7 @@ export const Sizes: Story = {
   render: () => (
     <div style={{ display: "flex", alignItems: "flex-end", gap: 16 }}>
       {[32, 48, 64, 96, 128].map((s) => (
-        <FileCityLogo key={s} theme={slateNeonTheme} width={s} height={s} />
+        <FileCityLogo key={s} theme={defaultTheme} width={s} height={s} />
       ))}
     </div>
   ),
@@ -219,7 +230,7 @@ export const Density: Story = {
     <div style={{ display: "flex", gap: 16 }}>
       {[4, 5, 6, 7].map((n) => (
         <div key={n} style={{ textAlign: "center" }}>
-          <FileCityLogo theme={slateNeonTheme} mark="none" highlight={false} width={120} height={120} cells={n} />
+          <FileCityLogo theme={defaultTheme} mark="none" highlight={false} width={120} height={120} cells={n} />
           <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>cells={n}</div>
         </div>
       ))}
@@ -231,9 +242,9 @@ export const Density: Story = {
 export const NextToDiagram: Story = {
   render: () => (
     <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-      <FileCityLogo theme={slateNeonTheme} width={160} height={160} />
+      <FileCityLogo theme={defaultTheme} width={160} height={160} />
       <div style={{ width: 360 }}>
-        <TrailCityDiagram theme={slateNeonTheme} />
+        <TrailCityDiagram theme={defaultTheme} />
       </div>
     </div>
   ),
@@ -241,7 +252,7 @@ export const NextToDiagram: Story = {
 };
 
 const ThemeSwitcherDemo = () => {
-  const [selectedTheme, setSelectedTheme] = useState<string>("slateNeon");
+  const [selectedTheme, setSelectedTheme] = useState<string>("iceTangerineDark");
   const theme = themes[selectedTheme];
 
   return (
