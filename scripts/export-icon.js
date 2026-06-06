@@ -27,11 +27,22 @@ function parseArgs(argv) {
     png: true,
     densityMultiplier: 2,
     background: null,
+    backgroundRaw: null,
     circularBackground: false,
     padding: null,
     component: "Logo",
     scale: 1.0,
+    // FileCityLogo-specific
+    mark: "P",
+    primary: null,
+    accent: null,
+    baseColor: null,
+    gradient: null,
+    rounded: true,
   };
+
+  const FILE_CITY_MARKS = ["P", "AI", "PAI", "lockup", "none"];
+  const FILE_CITY_GRADIENTS = ["scatter", "vertical", "horizontal", "diagonal"];
 
   const normalized = [];
   for (let i = 0; i < argv.length; i++) {
@@ -89,6 +100,7 @@ function parseArgs(argv) {
         break;
       case "--background":
         options.background = parseBackground(next);
+        options.backgroundRaw = next ?? null;
         i++;
         break;
       case "--circular-background":
@@ -104,14 +116,50 @@ function parseArgs(argv) {
           if (options.fileName === "logo") options.fileName = "forks-logo";
         } else if (next === "Logo" || next === "logo") {
           options.component = "Logo";
+        } else if (next === "FileCityLogo" || next === "filecity" || next === "file-city") {
+          options.component = "FileCityLogo";
+          if (options.fileName === "logo") options.fileName = "file-city-logo";
         } else {
-          throw new Error(`Unknown component: ${next}. Use "Logo" or "ForksLogo".`);
+          throw new Error(`Unknown component: ${next}. Use "Logo", "ForksLogo", or "FileCityLogo".`);
         }
         i++;
         break;
       case "--scale":
         options.scale = clamp(Number(next), 0.1, 2.0, options.scale);
         i++;
+        break;
+      // FileCityLogo-specific flags
+      case "--mark":
+        if (next && !FILE_CITY_MARKS.includes(next)) {
+          throw new Error(`Invalid --mark: ${next}. Use one of ${FILE_CITY_MARKS.join(", ")}.`);
+        }
+        options.mark = next ?? options.mark;
+        i++;
+        break;
+      case "--primary":
+        options.primary = next ?? null;
+        i++;
+        break;
+      case "--accent":
+        options.accent = next ?? null;
+        i++;
+        break;
+      case "--base-color":
+        options.baseColor = next ?? null;
+        i++;
+        break;
+      case "--gradient":
+        if (next && !FILE_CITY_GRADIENTS.includes(next)) {
+          throw new Error(`Invalid --gradient: ${next}. Use one of ${FILE_CITY_GRADIENTS.join(", ")}.`);
+        }
+        options.gradient = next ?? null;
+        i++;
+        break;
+      case "--rounded":
+        options.rounded = true;
+        break;
+      case "--no-rounded":
+        options.rounded = false;
         break;
       default:
         throw new Error(`Unknown flag: ${token}`);
@@ -160,7 +208,7 @@ function parseBackground(value) {
 }
 
 function loadLogoComponent(componentName = "Logo") {
-  const fileName = componentName === "ForksLogo" ? "ForksLogo.tsx" : "Logo.tsx";
+  const fileName = `${componentName}.tsx`;
   const filePath = path.resolve(__dirname, `../src/${fileName}`);
   const source = fs.readFileSync(filePath, "utf8");
   const transpiled = ts.transpileModule(source, {
@@ -227,8 +275,15 @@ async function maybeWritePng(svgMarkup, options, destination) {
     kernel: "lanczos3" // Use highest quality resampling
   });
 
-  // Flatten with background color if specified (but not for circular backgrounds)
-  if (options.background && options.background.alpha > 0 && !options.circularBackground) {
+  // Flatten with background color if specified (but not for circular
+  // backgrounds, and not for FileCityLogo which draws its own rounded
+  // panel — flattening would fill its transparent rounded corners).
+  if (
+    options.background &&
+    options.background.alpha > 0 &&
+    !options.circularBackground &&
+    options.component !== "FileCityLogo"
+  ) {
     pipeline = pipeline.flatten({ background: options.background });
   }
 
@@ -248,6 +303,48 @@ async function main() {
   const Logo = loadLogoComponent(options.component);
   if (typeof Logo !== "function") {
     throw new Error(`Unable to load ${options.component} component. Ensure src/${options.component}.tsx exports the component.`);
+  }
+
+  // FileCityLogo draws its own square/rounded panel and takes a different
+  // prop set, so it bypasses the sphere-specific post-processing below.
+  if (options.component === "FileCityLogo") {
+    const element = React.createElement(Logo, {
+      width: options.size,
+      height: options.size,
+      mark: options.mark,
+      primary: options.primary ?? undefined,
+      accent: options.accent ?? undefined,
+      color: options.baseColor ?? undefined,
+      background: options.backgroundRaw ?? undefined,
+      gradient: options.gradient ?? undefined,
+      rounded: options.rounded,
+      opacity: options.opacity,
+    });
+    let svgMarkup = renderToStaticMarkup(element);
+
+    // Inset the rounded panel, leaving transparent margin around it — the
+    // standard macOS squircle sizing (body ~80% of the canvas). Scales
+    // everything about the viewBox center (50,50).
+    if (options.scale !== 1.0) {
+      svgMarkup = svgMarkup.replace(
+        "</defs>",
+        `</defs><g transform="translate(50,50) scale(${options.scale}) translate(-50,-50)">`,
+      );
+      svgMarkup = svgMarkup.replace(/<\/svg>\s*$/, "</g></svg>");
+    }
+
+    await ensureDirectory(outputDir);
+    await writeSvg(svgPath, svgMarkup);
+    const pngResult = await maybeWritePng(svgMarkup, options, pngPath);
+
+    console.log(`SVG written to ${path.relative(process.cwd(), svgPath)}`);
+    console.log(
+      pngResult.skipped
+        ? `PNG skipped: ${pngResult.reason}`
+        : `PNG written to ${path.relative(process.cwd(), pngPath)}`,
+    );
+    if (pngResult.error && process.env.DEBUG) console.error(pngResult.error);
+    return;
   }
 
   const element = React.createElement(Logo, {

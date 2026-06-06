@@ -32,6 +32,26 @@ npm run export-icon -- \
   --density-multiplier=1
 ```
 
+## Theme: Ice Tangerine Dark — File City Logo
+
+The `FileCityLogo` component (a top-down grid of file squares spelling the
+brand mark) replaces the wireframe sphere on the desktop app. Colors are
+taken from the `iceTangerineDarkTheme` preset in `@principal-ade/industry-theme`.
+
+| Property | Value | FileCityLogo prop |
+|----------|-------|-------------------|
+| Primary (the P) | `#ff6b35` (orange) | `--primary` |
+| Accent (AI in lockup) | `#0893d2` (blue) | `--accent` |
+| Base / city tint | `#d0e5ea` (light) | `--base-color` |
+| Background panel | `#0d274d` (dark navy) | `--background` |
+
+**Exporter:** `scripts/export-icon.js` supports `--component=FileCityLogo`
+with these flags: `--mark` (`P` / `AI` / `PAI` / `lockup` / `none`),
+`--primary`, `--accent`, `--base-color`, `--background`, `--gradient`
+(`scatter` / `vertical` / `horizontal` / `diagonal`, default `diagonal`),
+`--rounded` / `--no-rounded`, and `--scale` (insets the rounded panel,
+leaving transparent margin for the macOS squircle).
+
 ## Deployments
 
 ### Mobile App
@@ -85,17 +105,22 @@ npm run export-icon -- \
 - `assets/icon.ico` - Windows app icon
 - `assets/icons/*.png` - all size variants (with and without padding)
 
+**Current logo:** `FileCityLogo`, `mark=P`, Ice Tangerine Dark colors.
+
 **Export command:**
 ```bash
+# Full-bleed SQUARE source — generate_icons.py adds the padding + rounded
+# corners itself, so export with --no-rounded and no inset.
 npm run export-icon -- \
+  --component=FileCityLogo \
+  --mark=P \
   --size=1024 \
   --name=principal-ade-icon \
-  --color=#E4C04A \
-  --particle-color=#2563EB \
-  --letter-color=#ffffff \
-  --circular-background \
-  --background=#1a1c1e \
-  --padding=14 \
+  --primary=#ff6b35 \
+  --accent=#0893d2 \
+  --base-color=#d0e5ea \
+  --background=#0d274d \
+  --no-rounded \
   --density-multiplier=1
 ```
 
@@ -107,9 +132,28 @@ python3 generate_icons.py
 ```
 
 **Notes:**
-- Uses circular background with padding for macOS icon style
+- Source must be a **full-bleed square** — `generate_icons.py` applies
+  Apple's ~10% padding and 18% rounded corners itself. Do **not** pass
+  `--rounded`/`--scale`/`--circular-background`/`--padding` for this surface.
+- `--density-multiplier=1` at size 1024 (a higher multiplier exceeds
+  sharp's pixel limit at that size).
 - `generate_icons.py` creates all sizes, .icns, and .ico files
 - Only `principal-ade-icon.png` is tracked in git (generated icons are gitignored)
+
+**Dev badge (macOS):**
+- `generate_icons.py` also emits `assets/icon-dev.png` — the padded/rounded
+  icon with a red "DEV" corner ribbon composited into the bottom-right.
+- `src/main/main.ts` applies it via `app.dock.setIcon(...)` when
+  `!app.isPackaged` (dev only); packaged builds keep the normal icon.
+- To restyle the ribbon, edit `add_dev_ribbon()` in `generate_icons.py`
+  (ribbon color/text/size/position) and re-run the script.
+
+**Previous logo (wireframe sphere, Slate Gold) — for reference:**
+```bash
+npm run export-icon -- --size=1024 --name=principal-ade-icon \
+  --color=#E4C04A --particle-color=#2563EB --letter-color=#ffffff \
+  --circular-background --background=#1a1c1e --padding=14 --density-multiplier=1
+```
 
 ---
 
