@@ -69,6 +69,20 @@ export interface FileCityLogoProps {
   gradient?: FileCityGradient;
   /** Round the panel corners. Default true. */
   rounded?: boolean;
+  /**
+   * Empty ring of city cells around the mark glyph, in cells. `1`
+   * (default) gives the mark breathing room; `0` packs the glyph
+   * edge-to-edge so each square is larger — e.g. a 3×5 "P" fills a 5×5
+   * grid instead of sitting in a 7×7 one.
+   */
+  margin?: number;
+  /**
+   * Drop a small "file card" into the bottom-right of the grid (3 cells
+   * across × 2 down) with **AI** as its contents — echoing the filename +
+   * snippet card from TrailCityDiagram. Only applies to `mark="P"`; the P
+   * is nudged one column left to clear room for the card.
+   */
+  aiCard?: boolean;
   opacity?: number;
 }
 
@@ -187,6 +201,8 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
   trail = false,
   gradient = 'diagonal',
   rounded = true,
+  margin = 1,
+  aiCard = false,
   opacity = 0.9,
 }) => {
   const uid = useId().replace(/:/g, '');
@@ -235,8 +251,8 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
   // Build a square grid. For `mark="none"` it's a plain `cells × cells`
   // city; otherwise the glyph bitmap sits inside a square grid (side =
   // longest glyph dimension + a margin ring) so the city reads square.
-  const margin = 1;
   const trailEnabled = trail && (mark === 'P' || mark === 'PAI');
+  const aiCardOn = aiCard && mark === 'P';
   let side: number;
   let offX = 0;
   let offY = 0;
@@ -283,6 +299,8 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
     // With a trail, shove the letter to the left so the trail has room
     // on the right; otherwise center it in the square.
     offX = trailEnabled ? margin : Math.floor((side - bw) / 2);
+    // Nudge the P one column left so the AI card has room on the right.
+    if (aiCardOn) offX = Math.max(0, offX - 1);
     offY = Math.floor((side - bh) / 2);
     kindAt = (c, r) => {
       const bc = c - offX;
@@ -294,6 +312,19 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
   }
   const cols = side;
   const rows = side;
+
+  // The AI card occupies the bottom-right 4×3 block of cells. Those cells
+  // render no building — the card covers them.
+  const AI_CARD_COLS = 3;
+  const AI_CARD_ROWS = 2;
+  // Inset one cell up and left from the bottom-right corner.
+  const aiCardC0 = cols - AI_CARD_COLS - 1;
+  const aiCardR0 = rows - AI_CARD_ROWS - 1;
+  // Nudge the card down half a cell so it straddles the row line — its
+  // body sits over the bottom of the top row and the top of the bottom
+  // row. The city renders behind it, so squares show around its edges.
+  const AI_CARD_ROW_SHIFT = 0.5;
+  const AI_CARD_COL_SHIFT = 0.5;
 
   // Trail to the right of the letter — starts in the top-right corner,
   // crosses 2 cells diagonally to its first node, zigzags down, and ends
@@ -421,6 +452,92 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = ({
         />,
       );
     }
+  }
+
+  // AI card — a small file card (filename header band + "AI" contents)
+  // dropped into the bottom-right block, mirroring TrailCityDiagram's
+  // snippet card.
+  if (aiCardOn) {
+    const cx0 = startX + (aiCardC0 + AI_CARD_COL_SHIFT) * cell + inset;
+    const cy0 = startY + (aiCardR0 + AI_CARD_ROW_SHIFT) * cell + inset;
+    const cw = AI_CARD_COLS * cell - inset * 2;
+    const chh = AI_CARD_ROWS * cell - inset * 2;
+    const headerH = chh * 0.28;
+    const cardR = Math.max(2, cell * 0.2);
+    const barH = Math.max(1, headerH * 0.26);
+    const fs = Math.min(cw * 0.42, (chh - headerH) * 0.64);
+
+    // Leader — anchored at the center of the P's bottom square. Routed
+    // with right-angle segments: down, right, up, then right into the
+    // card's left edge, "opening" the block. Dot at each end.
+    const aX = startX + (offX + 0.5) * cell;  // center of the stem column
+    const aY = startY + (offY + 4.5) * cell;  // middle of the bottom square
+    const bX = cx0;                           // left edge of the card
+    const bY = cy0 + chh * 0.2;               // near the top of that edge
+    // Route along grid centerlines so the runs thread through square
+    // centers: dip to the row below the P, climb at the column just left
+    // of the card.
+    const valleyY = startY + (offY + 5.5) * cell;  // center of the next row down
+    const turnX = startX + 2.5 * cell;             // center of the 3rd column
+    const dot = Math.max(1, cell * 0.12);
+    const leaderPath = `M ${aX} ${aY} L ${aX} ${valleyY} L ${turnX} ${valleyY} L ${turnX} ${bY} L ${bX} ${bY}`;
+    files.push(
+      <g key="ai-leader" opacity={0.75}>
+        <path
+          d={leaderPath}
+          fill="none"
+          stroke={accentColor}
+          strokeWidth={Math.max(0.6, cell * 0.07)}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={`${cell * 0.2} ${cell * 0.15}`}
+        />
+        <circle cx={aX} cy={aY} r={dot} fill={accentColor} />
+        <circle cx={bX} cy={bY} r={dot} fill={accentColor} />
+      </g>,
+    );
+    files.push(
+      <g key="ai-card">
+        <rect
+          x={cx0}
+          y={cy0}
+          width={cw}
+          height={chh}
+          rx={cardR}
+          fill={mix(bgColor, '#ffffff', 0.06)}
+          stroke={withAlpha(accentColor, 0.55)}
+          strokeWidth={0.8}
+        />
+        {/* Header band — only the top corners rounded, like a file tab. */}
+        <path
+          d={`M ${cx0} ${cy0 + headerH} L ${cx0} ${cy0 + cardR} Q ${cx0} ${cy0} ${cx0 + cardR} ${cy0} L ${cx0 + cw - cardR} ${cy0} Q ${cx0 + cw} ${cy0} ${cx0 + cw} ${cy0 + cardR} L ${cx0 + cw} ${cy0 + headerH} Z`}
+          fill={withAlpha(accentColor, 0.14)}
+        />
+        {/* Filename placeholder bar. */}
+        <rect
+          x={cx0 + cw * 0.16}
+          y={cy0 + headerH / 2 - barH / 2}
+          width={cw * 0.44}
+          height={barH}
+          rx={barH / 2}
+          fill={withAlpha(baseColor, 0.5)}
+        />
+        {/* Contents — "AI" instead of code lines. */}
+        <text
+          x={cx0 + cw / 2}
+          y={cy0 + headerH + (chh - headerH) / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+          fontWeight={700}
+          fontSize={fs}
+          letterSpacing="0.06em"
+          fill={accentColor}
+        >
+          AI
+        </text>
+      </g>,
+    );
   }
 
   // Trail overlay — a dashed accent path to the right of the letter with

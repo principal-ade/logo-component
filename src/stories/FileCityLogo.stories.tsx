@@ -113,6 +113,38 @@ export const IceTangerine: Story = {
   },
 };
 
+/** The P with an "AI" file card tucked into the bottom-right — a nod to
+ *  the filename + snippet card in TrailCityDiagram. The P shifts one
+ *  column left to make room. */
+export const AICard: Story = {
+  args: {
+    theme: defaultTheme,
+    mark: "P",
+    aiCard: true,
+    width: 220,
+    height: 220,
+  },
+};
+
+/** Same P, tighter grid: dropping the margin ring from 1 → 0 packs the
+ *  3×5 glyph into a 5×5 grid instead of 7×7, so each square is bigger. */
+export const BiggerSquares: Story = {
+  render: () => {
+    const Cell = ({ label, margin }: { label: string; margin: number }) => (
+      <div style={{ textAlign: "center" }}>
+        <FileCityLogo theme={defaultTheme} mark="P" margin={margin} width={200} height={200} />
+        <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>{label}</div>
+      </div>
+    );
+    return (
+      <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
+        <Cell label="margin=1 (7×7, default)" margin={1} />
+        <Cell label="margin=0 (5×5, bigger squares)" margin={0} />
+      </div>
+    );
+  },
+};
+
 /** Color-gradient variations on the default (P) mark — scatter (random
  *  shade) vs the directional dark→light gradients. */
 export const Gradients: Story = {
