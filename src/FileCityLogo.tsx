@@ -300,12 +300,13 @@ export function computeFileCityLayout({
   // The city tiles stay deliberately muted (low alpha) so the vivid,
   // full-strength `markPalette` P reads as the figure against this faded
   // "film" of buildings — that contrast is the whole point of the mark.
+  // These match the mobile port's values, which read correctly.
   const palette = [
-    withAlpha(primaryColor, 0.36),
-    withAlpha(primaryColor, 0.55),
-    withAlpha(baseColor, 0.18),
-    withAlpha(baseColor, 0.3),
-    withAlpha(baseColor, 0.45),
+    withAlpha(primaryColor, 0.18),
+    withAlpha(primaryColor, 0.32),
+    withAlpha(baseColor, 0.08),
+    withAlpha(baseColor, 0.14),
+    withAlpha(baseColor, 0.22),
   ];
 
   // The mark files vary in shade so the letter doesn't read as one flat
