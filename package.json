@@ -1,7 +1,7 @@
 {
   "name": "@principal-ai/logo-component",
-  "version": "0.1.19",
-  "description": "Animated wireframe sphere logo component",
+  "version": "0.1.20",
+  "description": "Principal AI brand logo and visualization components — animated wireframe sphere logo, FileCity grid mark, TrailCity diagram, and text-reveal effects",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -20,7 +20,12 @@
     "logo",
     "component",
     "svg",
-    "animated"
+    "animated",
+    "file-city",
+    "trail-city",
+    "diagram",
+    "brand",
+    "principal-ai"
   ],
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"

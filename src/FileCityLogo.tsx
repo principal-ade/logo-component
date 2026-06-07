@@ -280,7 +280,10 @@ export function computeFileCityLayout({
   rounded = true,
   margin = 1,
   aiCard = false,
-  opacity = 1,
+  // Slight global translucency gives the mark a faded "film" quality and
+  // keeps the muted city from competing with the P. Restored after a
+  // brief de-haze experiment that made the city too present.
+  opacity = 0.9,
   gloss = false,
   squareRadius = 0,
 }: FileCityLogoProps): FileCityLayout {
@@ -294,15 +297,15 @@ export function computeFileCityLayout({
     '#0a0f14';
 
   // Same palette weighting as TrailCityDiagram so the two read as a set.
-  // Alphas bumped up from the original (0.36/0.55/0.18/0.3/0.45) so the
-  // muted city tiles keep enough contrast against the lighter
-  // `backgroundSecondary` panel and don't wash out.
+  // The city tiles stay deliberately muted (low alpha) so the vivid,
+  // full-strength `markPalette` P reads as the figure against this faded
+  // "film" of buildings — that contrast is the whole point of the mark.
   const palette = [
-    withAlpha(primaryColor, 0.46),
-    withAlpha(primaryColor, 0.68),
-    withAlpha(baseColor, 0.28),
-    withAlpha(baseColor, 0.42),
-    withAlpha(baseColor, 0.58),
+    withAlpha(primaryColor, 0.36),
+    withAlpha(primaryColor, 0.55),
+    withAlpha(baseColor, 0.18),
+    withAlpha(baseColor, 0.3),
+    withAlpha(baseColor, 0.45),
   ];
 
   // The mark files vary in shade so the letter doesn't read as one flat
