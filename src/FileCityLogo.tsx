@@ -99,8 +99,8 @@ export interface FileCityLogoProps {
   rounded?: boolean;
   /**
    * Corner radius of each building square, as a fraction of the square's
-   * side. `0.12` (default) gives softly rounded tiles; `0` makes them
-   * sharp-cornered squares.
+   * side. `0` (default) gives sharp-cornered squares; raise it (e.g.
+   * `0.12`) for softly rounded tiles.
    */
   squareRadius?: number;
   /**
@@ -282,7 +282,7 @@ export function computeFileCityLayout({
   aiCard = false,
   opacity = 1,
   gloss = false,
-  squareRadius = 0.12,
+  squareRadius = 0,
 }: FileCityLogoProps): FileCityLayout {
   const primaryColor = primary ?? theme?.colors.primary ?? '#22d3ee';
   const accentColor = accent ?? theme?.colors.accent ?? primaryColor;

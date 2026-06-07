@@ -146,8 +146,8 @@ export const BiggerSquares: Story = {
 };
 
 /**
- * Square corner radius — softly rounded tiles (default 0.12) vs sharp
- * corners (0), shown across the main marks so you can judge the feel.
+ * Square corner radius — sharp corners (0, default) vs softly rounded
+ * tiles (0.12), shown across the main marks so you can judge the feel.
  */
 export const SquareCorners: Story = {
   render: () => {
@@ -170,8 +170,8 @@ export const SquareCorners: Story = {
     );
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-        <Col label="squareRadius=0.12 (rounded, default)" squareRadius={0.12} />
-        <Col label="squareRadius=0 (sharp)" squareRadius={0} />
+        <Col label="squareRadius=0 (sharp, default)" squareRadius={0} />
+        <Col label="squareRadius=0.12 (rounded)" squareRadius={0.12} />
       </div>
     );
   },
