@@ -120,6 +120,58 @@ export const Connectors: Story = {
   },
 };
 
+/** Trail (connector) color comparison — the same build, with the connector
+ *  bound to each candidate theme color so you can pick one. */
+export const TrailColors: Story = {
+  render: () => {
+    const [key, setKey] = useState(0);
+    const options = [
+      { label: "accent", color: defaultTheme.colors.accent },
+      { label: "highlight", color: defaultTheme.colors.highlight },
+      { label: "primary", color: defaultTheme.colors.primary },
+      { label: "info", color: defaultTheme.colors.info },
+    ];
+    return (
+      <div style={{ textAlign: "center" }}>
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center" }}>
+          {options.map((o) => (
+            <div key={o.label} style={{ textAlign: "center" }}>
+              <FileCityLogoAnimated
+                theme={defaultTheme}
+                mark="P"
+                width={180}
+                height={180}
+                connectors
+                connectorColor={o.color}
+                playKey={key}
+              />
+              <div style={{ color: "#aaa", fontSize: 12, marginTop: 4 }}>
+                {o.label}
+                <span style={{ color: "#666" }}> · {o.color}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => setKey((k) => k + 1)}
+          style={{
+            marginTop: 16,
+            padding: "8px 18px",
+            borderRadius: 6,
+            border: `1px solid ${defaultTheme.colors.primary}`,
+            background: defaultTheme.colors.backgroundSecondary,
+            color: defaultTheme.colors.text,
+            cursor: "pointer",
+            fontSize: 13,
+          }}
+        >
+          Replay all
+        </button>
+      </div>
+    );
+  },
+};
+
 /** Each mark, animated. */
 export const Marks: Story = {
   render: () => (
@@ -169,8 +221,8 @@ export const Pacing: Story = {
     return (
       <div style={{ textAlign: "center" }}>
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center" }}>
-          <Cell label="long pauses" cellMs={130} pauseMs={950} batchMin={2} batchMax={4} />
-          <Cell label="default (130ms / 700ms)" cellMs={130} pauseMs={700} batchMin={3} batchMax={6} />
+          <Cell label="long pauses" cellMs={185} pauseMs={1150} batchMin={2} batchMax={4} />
+          <Cell label="default (185ms / 900ms)" cellMs={185} pauseMs={900} batchMin={3} batchMax={6} />
           <Cell label="brisk" cellMs={80} pauseMs={420} batchMin={4} batchMax={7} />
         </div>
         <button
