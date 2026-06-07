@@ -15,6 +15,31 @@ export type FileCityGradient =
   | 'horizontal'
   | 'diagonal';
 
+/**
+ * Which edge the imaginary light comes from for the glass sheen. The
+ * highlight is brightest at that edge and fades to clear across the panel;
+ * the optional glint sits in the corresponding corner.
+ */
+export type GlossSide = 'top' | 'top-left' | 'top-right' | 'left' | 'right';
+
+/**
+ * Fine control over the glass sheen. All fields optional — `gloss={true}`
+ * is the same as `gloss={{}}` (a faint top-lit sheen).
+ */
+export interface GlossConfig {
+  /** Edge the light comes from. Default `'top-right'`. */
+  side?: GlossSide;
+  /** Peak white opacity at the lit edge. ~0.09 = faint, ~0.2 = shiny. Default 0.09. */
+  intensity?: number;
+  /** How far across the panel the highlight reaches before clearing (0–1). Default 0.46. */
+  spread?: number;
+  /** Add a concentrated specular hot-spot in the lit corner. Default false. */
+  glint?: boolean;
+}
+
+/** `true` = faint top sheen (defaults), an object = tuned sheen, `false` = flat. */
+export type GlossOption = boolean | GlossConfig;
+
 export interface FileCityLogoProps {
   width?: number;
   height?: number;
@@ -40,8 +65,11 @@ export interface FileCityLogoProps {
    */
   color?: string;
   /**
-   * Panel background behind the grid. Pass `"transparent"` to drop the
-   * panel and let the mark sit directly on its surface.
+   * Panel background behind the grid. Defaults to the theme's
+   * `backgroundSecondary` (falling back to `background`), so the icon
+   * sits on the panel/surface color rather than the page background. Pass
+   * `"transparent"` to drop the panel and let the mark sit directly on
+   * its surface.
    */
   background?: string;
   /**
@@ -69,6 +97,19 @@ export interface FileCityLogoProps {
   gradient?: FileCityGradient;
   /** Round the panel corners. Default true. */
   rounded?: boolean;
+  /**
+   * Corner radius of each building square, as a fraction of the square's
+   * side. `0.12` (default) gives softly rounded tiles; `0` makes them
+   * sharp-cornered squares.
+   */
+  squareRadius?: number;
+  /**
+   * Lay a glass sheen over the panel so the icon reads a touch glossy.
+   * `false` (default) is flat; `true` is a faint top-lit sheen; pass a
+   * {@link GlossConfig} object to tune the light's direction, strength,
+   * spread, and whether it has a specular glint.
+   */
+  gloss?: GlossOption;
   /**
    * Empty ring of city cells around the mark glyph, in cells. `1`
    * (default) gives the mark breathing room; `0` packs the glyph
@@ -217,6 +258,7 @@ export interface FileCityLayout {
   rounded: boolean;
   opacity: number;
   mark: FileCityMark;
+  gloss: GlossOption;
 }
 
 /**
@@ -238,20 +280,29 @@ export function computeFileCityLayout({
   rounded = true,
   margin = 1,
   aiCard = false,
-  opacity = 0.9,
+  opacity = 1,
+  gloss = false,
+  squareRadius = 0.12,
 }: FileCityLogoProps): FileCityLayout {
   const primaryColor = primary ?? theme?.colors.primary ?? '#22d3ee';
   const accentColor = accent ?? theme?.colors.accent ?? primaryColor;
   const baseColor = color ?? theme?.colors.text ?? '#f8fafc';
-  const bgColor = background ?? theme?.colors.background ?? '#0a0f14';
+  const bgColor =
+    background ??
+    theme?.colors.backgroundSecondary ??
+    theme?.colors.background ??
+    '#0a0f14';
 
   // Same palette weighting as TrailCityDiagram so the two read as a set.
+  // Alphas bumped up from the original (0.36/0.55/0.18/0.3/0.45) so the
+  // muted city tiles keep enough contrast against the lighter
+  // `backgroundSecondary` panel and don't wash out.
   const palette = [
-    withAlpha(primaryColor, 0.36),
-    withAlpha(primaryColor, 0.55),
-    withAlpha(baseColor, 0.18),
-    withAlpha(baseColor, 0.3),
-    withAlpha(baseColor, 0.45),
+    withAlpha(primaryColor, 0.46),
+    withAlpha(primaryColor, 0.68),
+    withAlpha(baseColor, 0.28),
+    withAlpha(baseColor, 0.42),
+    withAlpha(baseColor, 0.58),
   ];
 
   // The mark files vary in shade so the letter doesn't read as one flat
@@ -476,7 +527,7 @@ export function computeFileCityLayout({
         x,
         y,
         sq,
-        rx: Math.max(1, sq * 0.12),
+        rx: squareRadius > 0 ? Math.max(1, sq * squareRadius) : 0,
         fill: isLetter
           ? letterFill
           : palette[Math.floor(colorRoll * palette.length)],
@@ -611,7 +662,7 @@ export function computeFileCityLayout({
     });
   }
 
-  return { cells: cellsOut, extras, bgColor, baseColor, rounded, opacity, mark };
+  return { cells: cellsOut, extras, bgColor, baseColor, rounded, opacity, mark, gloss };
 }
 
 /** Accessible label for a given mark, shared by both components. */
@@ -634,9 +685,36 @@ export const FileCityPanel: React.FC<{
   rounded: boolean;
   opacity: number;
   label: string;
+  gloss?: GlossOption;
   children: React.ReactNode;
-}> = ({ width, height, bgColor, baseColor, rounded, opacity, label, children }) => {
+}> = ({ width, height, bgColor, baseColor, rounded, opacity, label, gloss = false, children }) => {
   const uid = useId().replace(/:/g, '');
+
+  // Normalize the gloss option → a config (or null when flat). `true`
+  // means "use all defaults"; an object overrides individual fields.
+  const g: Required<GlossConfig> | null =
+    gloss === false
+      ? null
+      : {
+          side: 'top-right',
+          intensity: 0.09,
+          spread: 0.46,
+          glint: false,
+          ...(gloss === true ? {} : gloss),
+        };
+
+  // Light direction → linear-gradient endpoints (the lit edge is the
+  // start point) and the glint's corner, both in 0–1 object-bounding-box
+  // coordinates.
+  const GLOSS_DIRS: Record<GlossSide, { x1: number; y1: number; x2: number; y2: number; gx: number; gy: number }> = {
+    top:          { x1: 0, y1: 0, x2: 0, y2: 1, gx: 0.5,  gy: 0.05 },
+    'top-left':   { x1: 0, y1: 0, x2: 1, y2: 1, gx: 0.22, gy: 0.08 },
+    'top-right':  { x1: 1, y1: 0, x2: 0, y2: 1, gx: 0.78, gy: 0.08 },
+    left:         { x1: 0, y1: 0, x2: 1, y2: 0, gx: 0.06, gy: 0.30 },
+    right:        { x1: 1, y1: 0, x2: 0, y2: 0, gx: 0.94, gy: 0.30 },
+  };
+  const dir = g ? GLOSS_DIRS[g.side] : GLOSS_DIRS.top;
+
   return (
     <svg
       width={width}
@@ -651,10 +729,38 @@ export const FileCityPanel: React.FC<{
         <clipPath id={`panel-${uid}`}>
           <rect x={0} y={0} width={VIEW} height={VIEW} rx={rounded ? PANEL_RADIUS : 0} />
         </clipPath>
+        {g && (
+          <>
+            {/* Directional sheen: a band brightest at the lit edge that
+                fades to clear partway across, like light catching glass. */}
+            <linearGradient id={`gloss-top-${uid}`} x1={dir.x1} y1={dir.y1} x2={dir.x2} y2={dir.y2}>
+              <stop offset="0%" stopColor="#ffffff" stopOpacity={g.intensity} />
+              <stop offset={`${g.spread * 60}%`} stopColor="#ffffff" stopOpacity={g.intensity * 0.22} />
+              <stop offset={`${g.spread * 100}%`} stopColor="#ffffff" stopOpacity={0} />
+            </linearGradient>
+            {/* Optional specular glint — a concentrated hot-spot in the
+                lit corner, the single brightest point of the reflection. */}
+            {g.glint && (
+              <radialGradient id={`gloss-spec-${uid}`} cx={dir.gx} cy={dir.gy} r={0.7}>
+                <stop offset="0%" stopColor="#ffffff" stopOpacity={g.intensity * 1.6} />
+                <stop offset="55%" stopColor="#ffffff" stopOpacity={g.intensity * 0.3} />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+              </radialGradient>
+            )}
+          </>
+        )}
       </defs>
       <g clipPath={`url(#panel-${uid})`}>
         <rect x={0} y={0} width={VIEW} height={VIEW} fill={bgColor} rx={rounded ? PANEL_RADIUS : 0} />
         {children}
+        {g && (
+          <g style={{ pointerEvents: 'none' }}>
+            <rect x={0} y={0} width={VIEW} height={VIEW} fill={`url(#gloss-top-${uid})`} />
+            {g.glint && (
+              <rect x={0} y={0} width={VIEW} height={VIEW} fill={`url(#gloss-spec-${uid})`} />
+            )}
+          </g>
+        )}
       </g>
       {/* Hairline tracing the panel edge so the icon stays defined against
           both light and dark dock backgrounds. Inset by half its width so
@@ -682,7 +788,7 @@ export const FileCityPanel: React.FC<{
  */
 export const FileCityLogo: React.FC<FileCityLogoProps> = (props) => {
   const { width = 150, height = 150 } = props;
-  const { cells, extras, bgColor, baseColor, rounded, opacity, mark } =
+  const { cells, extras, bgColor, baseColor, rounded, opacity, mark, gloss } =
     computeFileCityLayout(props);
   return (
     <FileCityPanel
@@ -692,6 +798,7 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = (props) => {
       baseColor={baseColor}
       rounded={rounded}
       opacity={opacity}
+      gloss={gloss}
       label={fileCityLabel(mark)}
     >
       {cells.map((cell) => (

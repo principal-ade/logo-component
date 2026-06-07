@@ -13,6 +13,9 @@ export type {
   FileCityGradient,
   FileCityCell,
   FileCityLayout,
+  GlossSide,
+  GlossConfig,
+  GlossOption,
 } from './FileCityLogo';
 export { FileCityLogoAnimated } from './FileCityLogoAnimated';
 export type { FileCityLogoAnimatedProps } from './FileCityLogoAnimated';

@@ -145,6 +145,138 @@ export const BiggerSquares: Story = {
   },
 };
 
+/**
+ * Square corner radius — softly rounded tiles (default 0.12) vs sharp
+ * corners (0), shown across the main marks so you can judge the feel.
+ */
+export const SquareCorners: Story = {
+  render: () => {
+    const Col = ({ label, squareRadius }: { label: string; squareRadius: number }) => (
+      <div style={{ textAlign: "center" }}>
+        <div style={{ display: "flex", gap: 16 }}>
+          {(["P", "lockup", "none"] as const).map((m) => (
+            <FileCityLogo
+              key={m}
+              theme={defaultTheme}
+              mark={m}
+              squareRadius={squareRadius}
+              width={160}
+              height={160}
+            />
+          ))}
+        </div>
+        <div style={{ color: "#888", fontSize: 12, marginTop: 8 }}>{label}</div>
+      </div>
+    );
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+        <Col label="squareRadius=0.12 (rounded, default)" squareRadius={0.12} />
+        <Col label="squareRadius=0 (sharp)" squareRadius={0} />
+      </div>
+    );
+  },
+};
+
+/** A finer sweep of corner radius on the default P, sharp → very round. */
+export const SquareCornerSweep: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "center" }}>
+      {[0, 0.06, 0.12, 0.22, 0.5].map((sr) => (
+        <div key={sr} style={{ textAlign: "center" }}>
+          <FileCityLogo
+            theme={defaultTheme}
+            mark="P"
+            squareRadius={sr}
+            width={160}
+            height={160}
+          />
+          <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>
+            squareRadius={sr}
+          </div>
+        </div>
+      ))}
+    </div>
+  ),
+};
+
+/** Glossy sheen — flat baseline vs the faint default. */
+export const Gloss: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
+      {([false, true] as const).map((g) => (
+        <div key={String(g)} style={{ textAlign: "center" }}>
+          <FileCityLogo theme={defaultTheme} mark="P" gloss={g} width={200} height={200} />
+          <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>
+            gloss={String(g)}
+          </div>
+        </div>
+      ))}
+    </div>
+  ),
+};
+
+/**
+ * Light-direction sweep — the same faint sheen lit from each side so you
+ * can pick where the "light source" sits. Top row no glint, bottom row
+ * with the specular corner glint added.
+ */
+const GLOSS_SIDES = ["top", "top-left", "top-right", "left", "right"] as const;
+
+export const GlossDirections: Story = {
+  render: () => {
+    const Row = ({ glint }: { glint: boolean }) => (
+      <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "center" }}>
+        {GLOSS_SIDES.map((side) => (
+          <div key={side} style={{ textAlign: "center" }}>
+            <FileCityLogo
+              theme={defaultTheme}
+              mark="P"
+              gloss={{ side, intensity: 0.1, glint }}
+              width={160}
+              height={160}
+            />
+            <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>
+              {side}
+              {glint ? " + glint" : ""}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <Row glint={false} />
+        <Row glint={true} />
+      </div>
+    );
+  },
+};
+
+/**
+ * Intensity ramp — top-lit sheen from barely-there to candy-shiny, so you
+ * can dial in how glossy it should read.
+ */
+export const GlossIntensity: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "center" }}>
+      {[0, 0.06, 0.1, 0.16, 0.24].map((intensity) => (
+        <div key={intensity} style={{ textAlign: "center" }}>
+          <FileCityLogo
+            theme={defaultTheme}
+            mark="P"
+            gloss={intensity === 0 ? false : { side: "top", intensity }}
+            width={160}
+            height={160}
+          />
+          <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>
+            {intensity === 0 ? "flat" : `intensity=${intensity}`}
+          </div>
+        </div>
+      ))}
+    </div>
+  ),
+};
+
 /** Color-gradient variations on the default (P) mark — scatter (random
  *  shade) vs the directional dark→light gradients. */
 export const Gradients: Story = {
