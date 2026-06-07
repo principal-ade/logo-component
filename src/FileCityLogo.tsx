@@ -247,11 +247,11 @@ export function computeFileCityLayout({
 
   // Same palette weighting as TrailCityDiagram so the two read as a set.
   const palette = [
-    withAlpha(primaryColor, 0.18),
-    withAlpha(primaryColor, 0.32),
-    withAlpha(baseColor, 0.08),
-    withAlpha(baseColor, 0.14),
-    withAlpha(baseColor, 0.22),
+    withAlpha(primaryColor, 0.36),
+    withAlpha(primaryColor, 0.55),
+    withAlpha(baseColor, 0.18),
+    withAlpha(baseColor, 0.3),
+    withAlpha(baseColor, 0.45),
   ];
 
   // The mark files vary in shade so the letter doesn't read as one flat
