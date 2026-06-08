@@ -13,7 +13,8 @@
     "prepublishOnly": "npm run build",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "export-icon": "node scripts/export-icon.js"
+    "export-icon": "node scripts/export-icon.js",
+    "export-banner": "node scripts/export-banner.js"
   },
   "keywords": [
     "react",

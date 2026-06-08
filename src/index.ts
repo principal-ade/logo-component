@@ -6,6 +6,10 @@ export { TextReveal } from './TextReveal';
 export { OpenTypeTextReveal } from './OpenTypeTextReveal';
 export { TrailCityDiagram } from './TrailCityDiagram';
 export type { TrailCityDiagramProps } from './TrailCityDiagram';
+export { TrailCityBanner } from './TrailCityBanner';
+export type { TrailCityBannerProps, BannerVariant } from './TrailCityBanner';
+export { TrailMarketingBanner } from './TrailMarketingBanner';
+export type { TrailMarketingBannerProps, MarketingBannerVariant } from './TrailMarketingBanner';
 export { FileCityLogo, FileCityPanel, computeFileCityLayout, fileCityLabel } from './FileCityLogo';
 export type {
   FileCityLogoProps,
