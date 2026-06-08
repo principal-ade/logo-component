@@ -209,6 +209,23 @@ export function TrailMarketingBanner({
     panelX = Math.min(W - panelSide - minMargin, Math.round(heroX + heroW + gap));
   }
 
+  // LinkedIn's profile background crops tighter on the left, so nudge the whole
+  // hero + panel + card cluster right (everything is keyed off heroX/panelX).
+  const clusterShiftX =
+    variant === 'linkedinProfile' && !cityLeft ? Math.round(W * 0.1) : 0;
+  if (clusterShiftX) {
+    heroX += clusterShiftX;
+    panelX = Math.min(W - panelSide - minMargin, panelX + clusterShiftX);
+  }
+
+  // LinkedIn fine-tuning: pull the city panel back left a touch.
+  const isLinkedInProfile = variant === 'linkedinProfile' && !cityLeft;
+  if (isLinkedInProfile) panelX -= Math.round(W * 0.03);
+  // Indent the byline right so it tucks under the headline (profile surfaces).
+  const indentByline =
+    !cityLeft && (variant === 'linkedinProfile' || variant === 'twitterHeader');
+  const bylineX = heroX + (indentByline ? Math.round(W * 0.025) : 0);
+
   const headlineY = heroCY + Math.round(headlineFont * 0.34);
   const bylineY = headlineY + Math.round(H * 0.115);
 
@@ -229,8 +246,8 @@ export function TrailMarketingBanner({
   const anchorX = panelX + anchorPt.x * k;
   const anchorY = panelY + anchorPt.y * k;
 
-  const bodyFont = Math.round(H * 0.048);
-  const headerFont = Math.round(H * 0.036);
+  const bodyFont = Math.round(H * 0.058);
+  const headerFont = Math.round(H * 0.044);
   const headerH = Math.round(bodyFont * 1.6);
   const padX = Math.round(bodyFont * 0.7);
   const padY = Math.round(bodyFont * 0.7);
@@ -240,7 +257,7 @@ export function TrailMarketingBanner({
   const taglineW = tagline ? Math.round(tagline.length * bodyFont * 0.55) : 0;
   const cardW = cityLeft
     ? taglineW + padX * 2 // just fits the one-line tagline
-    : Math.round(panelSide * 0.92);
+    : Math.max(Math.round(panelSide * 0.92), taglineW + padX * 2); // widen to fit the bigger text
   const cardH = headerH + padY * 2 + bodyFont;
   // The headline renders tighter than the estimate (bold + letterSpacing -2),
   // so use a corrected width to center the card under it.
@@ -248,9 +265,9 @@ export function TrailMarketingBanner({
   let cardX = Math.round(heroX + (headlineRenderW - cardW) / 2); // centered under the headline
   if (!cityLeft) {
     // The card would otherwise sit in the lower-left, where the platform drops
-    // the profile photo / avatar. Push it right to clear that chrome — but
-    // never far enough to run into the city panel.
-    const clearLeft = Math.round(W * 0.3);
+    // the profile photo / avatar. Push it right to clear that chrome (and sit
+    // nearer the trail it labels) — but never far enough to run into the panel.
+    const clearLeft = Math.round(W * 0.36);
     const maxLeft = panelX - cardW - Math.round(W * 0.012);
     cardX = clamp(cardX, Math.min(clearLeft, maxLeft), maxLeft);
   }
@@ -338,7 +355,7 @@ export function TrailMarketingBanner({
 
         {byline && (
           <text
-            x={heroX}
+            x={bylineX}
             y={bylineY}
             fontSize={bylineFont}
             fontWeight={600}
