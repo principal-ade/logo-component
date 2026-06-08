@@ -12,6 +12,7 @@ import {
   neuralPulseTheme,
   landingPageTheme,
   iceTangerineTheme,
+  iceTangerineDarkTheme,
   type Theme,
 } from "@principal-ade/industry-theme";
 
@@ -26,6 +27,7 @@ const themes: Record<string, Theme> = {
   neuralPulse: neuralPulseTheme,
   landingPage: landingPageTheme,
   iceTangerine: iceTangerineTheme,
+  iceTangerineDark: iceTangerineDarkTheme,
 };
 
 const meta = {
@@ -43,15 +45,21 @@ const meta = {
     showTrail: { control: "boolean" },
     showChip: { control: "boolean" },
     leaderMarker: { control: { type: "range", min: 1, max: 4, step: 1 } },
+    wordmark: { control: "text" },
   },
 } satisfies Meta<typeof TrailCityBanner>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** X / Twitter company header preset — 1500×500. */
+/** X / Twitter company header preset — 1500×500. Dark theme, with the city
+ *  spelling the wordmark instead of a random skyline. */
 export const TwitterHeader: Story = {
-  args: { variant: "twitterHeader", theme: landingPageTheme },
+  args: {
+    variant: "twitterHeader",
+    theme: iceTangerineDarkTheme,
+    wordmark: "CODE TRAILS",
+  },
   render: (args) => (
     <div style={{ width: 1080, maxWidth: "92vw" }}>
       <TrailCityBanner {...args} />
@@ -59,9 +67,14 @@ export const TwitterHeader: Story = {
   ),
 };
 
-/** LinkedIn company page cover preset — 1128×191. */
+/** LinkedIn company page cover preset — 1128×191. Dark theme, with the city
+ *  spelling the wordmark instead of a random skyline. */
 export const LinkedInCompanyCover: Story = {
-  args: { variant: "linkedinCompany", theme: landingPageTheme },
+  args: {
+    variant: "linkedinCompany",
+    theme: iceTangerineDarkTheme,
+    wordmark: "CODE TRAILS",
+  },
   render: (args) => (
     <div style={{ width: 1015, maxWidth: "92vw" }}>
       <TrailCityBanner {...args} />

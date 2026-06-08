@@ -2,14 +2,14 @@
 "use strict";
 
 /**
- * Render TrailCityBanner to upload-ready PNGs (and the source SVG) at the
- * native dimensions of each social surface, plus an @2x for retina.
+ * Render TrailCityBanner to upload-ready PNGs at the native dimensions of each
+ * social surface. (Pass --svg to also write the source SVG.)
  *
  * Usage:
  *   node scripts/export-banner.js                       # all variants, iceTangerine
  *   node scripts/export-banner.js --variant twitterHeader
  *   node scripts/export-banner.js --theme landingPage --seed 12 --leader 2
- *   node scripts/export-banner.js --no-chip --scales 1,2,3
+ *   node scripts/export-banner.js --no-chip --scales 1,2   # opt in to extra scales
  *
  * Flags:
  *   --variant   twitterHeader | linkedinCompany | all   (default all)
@@ -20,9 +20,10 @@
  *   --no-chip   hide the code chip
  *   --no-trail  hide the trail + markers
  *   --no-reserve-left   don't fade the left logo zone
- *   --scales    comma list of scale factors              (default 1,2)
+ *   --scales    comma list of scale factors              (default 1)
  *   --out       output directory                         (default exports/banners)
- *   --svg-only  skip PNG rasterization
+ *   --svg       also write the source SVG (default: PNG only)
+ *   --svg-only  write only the SVG, skip PNG rasterization
  */
 
 const fs = require("node:fs");
@@ -52,13 +53,15 @@ function parseArgs(argv) {
     chip: undefined, // undefined => component's per-variant default
     trail: true,
     reserveLeft: true,
-    scales: [1, 2],
+    scales: [1],
     out: "exports/banners",
     png: true,
+    svg: false, // write the .svg source too (off by default — PNG only)
     style: "trail", // trail | marketing
     headline: undefined,
     tagline: undefined,
     byline: undefined,
+    wordmark: undefined, // trail style: spell text out of the city instead of a skyline
   };
   const norm = [];
   for (const a of argv) {
@@ -81,11 +84,13 @@ function parseArgs(argv) {
       case "--headline": opts.headline = next; i++; break;
       case "--tagline": opts.tagline = next; i++; break;
       case "--byline": opts.byline = next; i++; break;
+      case "--wordmark": opts.wordmark = next; i++; break;
       case "--city-left": opts.cityLeft = true; break;
       case "--city-right": opts.cityLeft = false; break;
       case "--scales": opts.scales = next.split(",").map(Number).filter((n) => n > 0); i++; break;
       case "--out": opts.out = next; i++; break;
-      case "--svg-only": opts.png = false; break;
+      case "--svg": opts.svg = true; break;
+      case "--svg-only": opts.svg = true; opts.png = false; break;
       default: break;
     }
   }
@@ -182,14 +187,29 @@ async function exportVariant(Banner, variant, theme, opts, outDir) {
           showTrail: opts.trail,
           reserveLeft: opts.reserveLeft,
           ...(opts.chip === undefined ? {} : { showChip: opts.chip }),
+          ...(opts.wordmark === undefined ? {} : { wordmark: opts.wordmark }),
         };
   const svg = finalizeSvg(renderToStaticMarkup(React.createElement(Banner, props)), preset.w, preset.h);
 
-  const styleTag = opts.style === "marketing" ? "marketing" : opts.theme;
-  const base = `${preset.slug}-${styleTag}`;
-  const svgPath = path.join(outDir, `${base}.svg`);
-  await fsp.writeFile(svgPath, `${XML_HEADER}\n${svg}`);
-  console.log(`  svg  → ${path.relative(process.cwd(), svgPath)}  (${preset.w}×${preset.h})`);
+  // Name by surface, not theme. The two styles map to two audiences:
+  //   • trail / wordmark style → "company" surfaces
+  //   • marketing style        → "profile" surfaces
+  // On X both are the same 1500×500 header, distinguished only by style; on
+  // LinkedIn they're already separate variants (cover vs background).
+  const base =
+    variant === "twitterHeader"
+      ? opts.style === "marketing"
+        ? "x-profile-header"
+        : "x-company-header"
+      : preset.slug;
+
+  // The SVG source is built in memory to rasterize the PNG; only write the
+  // .svg file when explicitly asked (--svg / --svg-only).
+  if (opts.svg) {
+    const svgPath = path.join(outDir, `${base}.svg`);
+    await fsp.writeFile(svgPath, `${XML_HEADER}\n${svg}`);
+    console.log(`  svg  → ${path.relative(process.cwd(), svgPath)}  (${preset.w}×${preset.h})`);
+  }
 
   if (!opts.png) return;
   for (const scale of opts.scales) {

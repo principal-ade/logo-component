@@ -62,6 +62,14 @@ export interface TrailCityBannerProps {
    * highlighted/active marker. Defaults to 2.
    */
   leaderMarker?: number;
+  /**
+   * When set, the banner drops the random skyline + trail and instead spells
+   * this text *out of the city* — primary-colored "buildings" forming the
+   * letters against the muted city, the wide-banner sibling of
+   * {@link FileCityLogo}'s `mark="P"`. Rendered uppercase, single baseline,
+   * centered with a vertical letterbox of city.
+   */
+  wordmark?: string;
 }
 
 export function TrailCityBanner({
@@ -75,6 +83,7 @@ export function TrailCityBanner({
   showTrail = true,
   showChip,
   leaderMarker = 2,
+  wordmark,
 }: TrailCityBannerProps) {
   const cfg = VARIANTS[variant];
   const W = width ?? cfg.w;
@@ -88,6 +97,9 @@ export function TrailCityBanner({
   const text = colors?.text ?? '#f8fafc';
   const muted = colors?.textMuted ?? '#94a3b8';
   const bg = colors?.background ?? '#0a0f14';
+  // Wordmark mode sits on the lighter panel navy (backgroundSecondary) rather
+  // than the near-black page background, matching the marketing card's field.
+  const bgSecondary = colors?.backgroundSecondary ?? bg;
 
   const palette = useMemo(
     () => [
@@ -99,6 +111,103 @@ export function TrailCityBanner({
     ],
     [accent, text],
   );
+
+  // --- wordmark mode: spell text out of the city -----------------------
+  // The wide-banner sibling of FileCityLogo's mark="P". When `wordmark` is
+  // set we abandon the random skyline + trail below and build a full-bleed
+  // city whose primary-colored buildings trace the letters, with the muted
+  // city filling the rest (and a vertical letterbox of city above/below the
+  // single baseline).
+  const wordmarkCity = useMemo(() => {
+    if (!wordmark) return null;
+    const bitmap = buildWordmarkBitmap(wordmark);
+    const bh = bitmap.length; // glyph rows (7)
+    const bw = bitmap[0]?.length ?? 0;
+    if (!bw) return null;
+
+    // Size a cell so the baseline fills ~64% of the height (leaving the
+    // letterbox) but never overflows the width.
+    const cellSize = Math.min((H * 0.64) / bh, (W * 0.92) / bw);
+    const COLS = Math.max(bw, Math.round(W / cellSize));
+    const ROWS = Math.max(bh, Math.round(H / cellSize));
+    const offX = Math.round((W - COLS * cellSize) / 2);
+    const offY = Math.round((H - ROWS * cellSize) / 2);
+    // Center the glyph bitmap within the (larger) city grid.
+    const gOffC = Math.floor((COLS - bw) / 2);
+    const gOffR = Math.floor((ROWS - bh) / 2);
+    const sq = cellSize * 0.74; // smaller than the cell → gaps between buildings
+    const inset = (cellSize - sq) / 2;
+
+    // 0 = city, 1 = letter, 2 = hole (the letter's counter — left empty so
+    // the background shows through as a clean loop).
+    const kindAt = (c: number, r: number): 0 | 1 | 2 => {
+      const bc = c - gOffC;
+      const br = r - gOffR;
+      if (br < 0 || br >= bh || bc < 0 || bc >= bw) return 0;
+      return bitmap[br][bc] as 0 | 1 | 2;
+    };
+    const touchesLetter = (c: number, r: number) =>
+      kindAt(c - 1, r) === 1 ||
+      kindAt(c + 1, r) === 1 ||
+      kindAt(c, r - 1) === 1 ||
+      kindAt(c, r + 1) === 1;
+
+    // Diagonal dark→light shading for the letters, matching FileCityLogo.
+    const lo = mix(accent, '#000000', 0.12);
+    const hi = mix(accent, '#ffffff', 0.4);
+
+    // Muted city tints — much fainter than the skyline palette so the vivid
+    // letters read as the figure against a quiet backdrop (mirrors the city
+    // weighting in FileCityLogo / the marketing card, not the bright trail
+    // palette this banner uses elsewhere).
+    const cityPalette = [
+      withAlpha(accent, 0.12),
+      withAlpha(accent, 0.20),
+      withAlpha(text, 0.05),
+      withAlpha(text, 0.09),
+      withAlpha(text, 0.14),
+    ];
+
+    const rng = mulberry32(seed);
+    const out: {
+      x: number; y: number; w: number; h: number;
+      fill: string; stroke: string; sw: number; rx: number;
+    }[] = [];
+    // Fraction of non-letter city tiles to drop, so the wordmark reads against
+    // a sparse scatter of buildings rather than a packed grid.
+    const CITY_SKIP = 0.5;
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const k = kindAt(c, r);
+        const skipRoll = rng();
+        const colorRoll = rng();
+        if (k === 2) continue; // hole (letter counter) — always empty
+        // City tiles thin out so the letters stand alone — but tiles touching a
+        // letter always render, keeping the glyph edges clean.
+        if (k === 0 && !touchesLetter(c, r) && skipRoll < CITY_SKIP) continue;
+        const isLetter = k === 1;
+        let fill: string;
+        if (isLetter) {
+          const fx = COLS > 1 ? c / (COLS - 1) : 0;
+          const fy = ROWS > 1 ? r / (ROWS - 1) : 0;
+          fill = mix(lo, hi, (fx + fy) / 2);
+        } else {
+          fill = cityPalette[Math.floor(colorRoll * cityPalette.length)]!;
+        }
+        out.push({
+          x: offX + c * cellSize + inset,
+          y: offY + r * cellSize + inset,
+          w: sq,
+          h: sq,
+          fill,
+          stroke: isLetter ? withAlpha(accent, 0.55) : withAlpha(text, 0.08),
+          sw: isLetter ? Math.max(0.5, cellSize * 0.03) : 0.5,
+          rx: Math.max(1.5, sq * 0.08),
+        });
+      }
+    }
+    return out;
+  }, [wordmark, W, H, accent, text, seed]);
 
   // --- grid geometry derived from the frame ----------------------------
   const cell = cfg.h / cfg.rows; // building cell size, consistent across variants
@@ -196,7 +305,11 @@ export function TrailCityBanner({
       className={className}
       style={{ display: 'block', width: '100%', height: 'auto' }}
       role="img"
-      aria-label="A trail of code locations connected across a wide top-down city of files"
+      aria-label={
+        wordmark
+          ? `A wide top-down city of files spelling "${wordmark}"`
+          : 'A trail of code locations connected across a wide top-down city of files'
+      }
     >
       <defs>
         <radialGradient id={`glow-${uid}`} cx="50%" cy="50%" r="50%">
@@ -205,8 +318,27 @@ export function TrailCityBanner({
         </radialGradient>
       </defs>
 
-      <rect x={0} y={0} width={W} height={H} fill={bg} />
+      <rect x={0} y={0} width={W} height={H} fill={wordmarkCity ? bgSecondary : bg} />
 
+      {wordmarkCity ? (
+        /* Wordmark mode — the city spells the text; no trail/markers. */
+        <g>
+          {wordmarkCity.map((b, i) => (
+            <rect
+              key={i}
+              x={b.x}
+              y={b.y}
+              width={b.w}
+              height={b.h}
+              fill={b.fill}
+              stroke={b.stroke}
+              strokeWidth={b.sw}
+              rx={b.rx}
+            />
+          ))}
+        </g>
+      ) : (
+        <>
       {/* City strip */}
       <g>
         {buildings.map((b, i) => (
@@ -326,6 +458,8 @@ export function TrailCityBanner({
           )}
         </>
       )}
+        </>
+      )}
     </svg>
   );
 }
@@ -396,10 +530,72 @@ function CodeChip({
   );
 }
 
+// --- wordmark glyphs ---------------------------------------------------
+// 5-wide × 7-tall uppercase pixel glyphs, the wide-banner cousins of
+// FileCityLogo's GLYPHS. `1` = a letter (primary) building, `H` = the letter's
+// counter (a forced hole so loops read clean), `0` = a city building. Only the
+// letters needed for the shipped wordmarks are defined; unknown chars fall back
+// to a 1-column space.
+const WORDMARK_GLYPHS: Record<string, string[]> = {
+  ' ': ['0', '0', '0', '0', '0', '0', '0'],
+  A: ['01110', '1HHH1', '1HHH1', '11111', '10001', '10001', '10001'],
+  C: ['01110', '10001', '10000', '10000', '10000', '10001', '01110'],
+  D: ['11110', '1HHH1', '1HHH1', '1HHH1', '1HHH1', '1HHH1', '11110'],
+  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
+  I: ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
+  L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
+  O: ['01110', '1HHH1', '1HHH1', '1HHH1', '1HHH1', '1HHH1', '01110'],
+  R: ['11110', '1HHH1', '1HHH1', '11110', '10100', '10010', '10001'],
+  S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
+  T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+};
+
+/** Compose the uppercase `text` into a 7-row bitmap (1 = letter, 2 = hole,
+ *  0 = city), inserting a single city column between adjacent characters. */
+function buildWordmarkBitmap(text: string): number[][] {
+  const rows = 7;
+  const out: number[][] = Array.from({ length: rows }, () => [] as number[]);
+  text
+    .toUpperCase()
+    .split('')
+    .forEach((ch, i) => {
+      const glyph = WORDMARK_GLYPHS[ch] ?? WORDMARK_GLYPHS[' '];
+      if (i > 0) for (let r = 0; r < rows; r++) out[r].push(0);
+      for (let r = 0; r < rows; r++) {
+        for (const px of glyph[r]) out[r].push(px === '1' ? 1 : px === 'H' ? 2 : 0);
+      }
+    });
+  return out;
+}
+
 // --- local helpers (kept private; mirror TrailCityDiagram) -------------
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
+}
+
+function toRgb(color: string): [number, number, number] | null {
+  if (!/^#([0-9a-f]{3}){1,2}$/i.test(color)) return null;
+  let hex = color.slice(1);
+  if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+  return [
+    parseInt(hex.slice(0, 2), 16),
+    parseInt(hex.slice(2, 4), 16),
+    parseInt(hex.slice(4, 6), 16),
+  ];
+}
+
+/** Blend two hex colors. `t` = 0 returns `a`, `t` = 1 returns `b`. Falls
+ *  back to `a` when either side isn't a parseable hex. */
+function mix(a: string, b: string, t: number): string {
+  const ca = toRgb(a);
+  const cb = toRgb(b);
+  if (!ca || !cb) return a;
+  const ch = (i: number) =>
+    Math.round(ca[i] + (cb[i] - ca[i]) * clamp(t, 0, 1))
+      .toString(16)
+      .padStart(2, '0');
+  return `#${ch(0)}${ch(1)}${ch(2)}`;
 }
 
 /** VH leader from `a` (marker) to `b` (chip anchor): exits `a` vertically

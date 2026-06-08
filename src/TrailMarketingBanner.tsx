@@ -171,7 +171,12 @@ export function TrailMarketingBanner({
   // card (which stays anchored in the gap below it).
   const heroStaggerX = cityLeft ? Math.round(W * 0.055) : 0;
   const heroStaggerY = cityLeft ? Math.round(H * 0.1) : 0;
-  const heroCY = Math.round(H * 0.4) - heroStaggerY;
+  // Sit the hero high in the frame so it clears the platform's profile photo +
+  // name card, which overlap the lower-left of profile backgrounds. (cityLeft
+  // keeps its original 0.4 anchor, less its stagger, so that layout is
+  // unchanged.)
+  const heroBaseFrac = cityLeft ? 0.4 : 0.3;
+  const heroCY = Math.round(H * heroBaseFrac) - heroStaggerY;
   const footSize = Math.round(H * 0.04);
   const footGap = Math.round(H * 0.085);
   const headlineFont = Math.round(H * 0.205);
@@ -240,7 +245,15 @@ export function TrailMarketingBanner({
   // The headline renders tighter than the estimate (bold + letterSpacing -2),
   // so use a corrected width to center the card under it.
   const headlineRenderW = Math.round(headlineW * 0.86);
-  const cardX = Math.round(heroX + (headlineRenderW - cardW) / 2); // centered under the headline
+  let cardX = Math.round(heroX + (headlineRenderW - cardW) / 2); // centered under the headline
+  if (!cityLeft) {
+    // The card would otherwise sit in the lower-left, where the platform drops
+    // the profile photo / avatar. Push it right to clear that chrome — but
+    // never far enough to run into the city panel.
+    const clearLeft = Math.round(W * 0.3);
+    const maxLeft = panelX - cardW - Math.round(W * 0.012);
+    cardX = clamp(cardX, Math.min(clearLeft, maxLeft), maxLeft);
+  }
   const cardNearX = cityLeft ? cardX : cardX + cardW;
   const cardY = Math.max(panelY, panelY + panelSide - cardH);
   const leaderY = clamp(anchorY, cardY + 12, cardY + cardH - 12);

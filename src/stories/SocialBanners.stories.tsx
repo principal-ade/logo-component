@@ -5,6 +5,7 @@ import { TrailMarketingBanner } from "../TrailMarketingBanner";
 import {
   landingPageTheme,
   iceTangerineTheme,
+  iceTangerineDarkTheme,
   type Theme,
 } from "@principal-ade/industry-theme";
 
@@ -12,6 +13,13 @@ import {
 const BANNER_THEME: Theme = iceTangerineTheme;
 // Kept imported as the easy alternate to switch back to.
 void landingPageTheme;
+
+// The wordmark surfaces (LinkedIn company cover + X/Twitter header) spell the
+// text (the wide cousin of FileCityLogo's "P") out of the city, on the
+// iceTangerineDark palette — the same dark palette the LinkedIn profile
+// background (TrailMarketingBanner) rides, so the set reads together.
+const WORDMARK_THEME: Theme = iceTangerineDarkTheme;
+const WORDMARK_TEXT = "CODE TRAILS";
 
 /**
  * Social banner shape studies.
@@ -215,10 +223,19 @@ function SafeZoneOverlay({ spec }: { spec: BannerSpec }) {
  * The real banner art — TrailCityBanner sized to the frame's preset. Fills the
  * frame edge to edge (the component's own viewBox matches the native size).
  */
-function BannerArt({ spec, theme }: { spec: BannerSpec; theme: Theme }) {
+function BannerArt({
+  spec,
+  theme,
+  wordmark,
+}: {
+  spec: BannerSpec;
+  theme: Theme;
+  /** When set, the city spells this text instead of a random skyline. */
+  wordmark?: string;
+}) {
   return (
     <div style={{ position: "absolute", inset: 0, lineHeight: 0 }}>
-      <TrailCityBanner variant={spec.variant} theme={theme} />
+      <TrailCityBanner variant={spec.variant} theme={theme} wordmark={wordmark} />
     </div>
   );
 }
@@ -270,24 +287,26 @@ const pageWrap = (children: React.ReactNode, bg = "#0b0f14"): React.ReactNode =>
 // Shape-study stories (frame + guides)
 // ---------------------------------------------------------------------------
 
-/** X / Twitter company header frame, with safe-zone guides over placeholder art. */
+/** X / Twitter company header — dark theme, city spelling the wordmark
+ *  (CODE TRAILS), with safe-zone guides. */
 export const TwitterHeader: Story = {
   parameters: { layout: "fullscreen" },
   render: () =>
     pageWrap(
-      <BannerFrame spec={TWITTER} scale={SCALE.twitter} theme={BANNER_THEME}>
-        <BannerArt spec={TWITTER} theme={BANNER_THEME} />
+      <BannerFrame spec={TWITTER} scale={SCALE.twitter} theme={WORDMARK_THEME}>
+        <BannerArt spec={TWITTER} theme={WORDMARK_THEME} wordmark={WORDMARK_TEXT} />
       </BannerFrame>,
     ),
 };
 
-/** LinkedIn company page cover frame, with safe-zone guides over placeholder art. */
+/** LinkedIn company page cover — dark theme, with the city spelling the
+ *  wordmark (CODE TRAILS) the same way FileCityLogo's city spells a "P". */
 export const LinkedInCompanyCover: Story = {
   parameters: { layout: "fullscreen" },
   render: () =>
     pageWrap(
-      <BannerFrame spec={LINKEDIN} scale={SCALE.linkedin} theme={BANNER_THEME}>
-        <BannerArt spec={LINKEDIN} theme={BANNER_THEME} />
+      <BannerFrame spec={LINKEDIN} scale={SCALE.linkedin} theme={WORDMARK_THEME}>
+        <BannerArt spec={LINKEDIN} theme={WORDMARK_THEME} wordmark={WORDMARK_TEXT} />
       </BannerFrame>,
     ),
 };
@@ -313,11 +332,11 @@ export const ShapeComparison: Story = {
   render: () =>
     pageWrap(
       <>
-        <BannerFrame spec={TWITTER} scale={SCALE.twitter} theme={BANNER_THEME}>
-          <BannerArt spec={TWITTER} theme={BANNER_THEME} />
+        <BannerFrame spec={TWITTER} scale={SCALE.twitter} theme={WORDMARK_THEME}>
+          <BannerArt spec={TWITTER} theme={WORDMARK_THEME} wordmark={WORDMARK_TEXT} />
         </BannerFrame>
-        <BannerFrame spec={LINKEDIN} scale={SCALE.twitter} theme={BANNER_THEME}>
-          <BannerArt spec={LINKEDIN} theme={BANNER_THEME} />
+        <BannerFrame spec={LINKEDIN} scale={SCALE.twitter} theme={WORDMARK_THEME}>
+          <BannerArt spec={LINKEDIN} theme={WORDMARK_THEME} wordmark={WORDMARK_TEXT} />
         </BannerFrame>
       </>,
     ),
@@ -332,18 +351,18 @@ export const NoGuides: Story = {
         <BannerFrame
           spec={TWITTER}
           scale={SCALE.twitter}
-          theme={BANNER_THEME}
+          theme={WORDMARK_THEME}
           showGuides={false}
         >
-          <BannerArt spec={TWITTER} theme={BANNER_THEME} />
+          <BannerArt spec={TWITTER} theme={WORDMARK_THEME} wordmark={WORDMARK_TEXT} />
         </BannerFrame>
         <BannerFrame
           spec={LINKEDIN}
           scale={SCALE.linkedin}
-          theme={BANNER_THEME}
+          theme={WORDMARK_THEME}
           showGuides={false}
         >
-          <BannerArt spec={LINKEDIN} theme={BANNER_THEME} />
+          <BannerArt spec={LINKEDIN} theme={WORDMARK_THEME} wordmark={WORDMARK_TEXT} />
         </BannerFrame>
       </>,
     ),
@@ -361,8 +380,8 @@ export const TwitterInContext: Story = {
     const w = TWITTER.w * scale;
     return pageWrap(
       <div style={{ width: w, color: "#e7e9ea", fontFamily: "system-ui, sans-serif" }}>
-        <BannerFrame spec={TWITTER} scale={scale} theme={BANNER_THEME} showGuides={false}>
-          <BannerArt spec={TWITTER} theme={BANNER_THEME} />
+        <BannerFrame spec={TWITTER} scale={scale} theme={WORDMARK_THEME} showGuides={false}>
+          <BannerArt spec={TWITTER} theme={WORDMARK_THEME} wordmark={WORDMARK_TEXT} />
         </BannerFrame>
         {/* profile row */}
         <div style={{ position: "relative", padding: "0 16px" }}>
@@ -374,7 +393,7 @@ export const TwitterInContext: Story = {
               width: 96,
               height: 96,
               borderRadius: "50%",
-              background: BANNER_THEME.colors.background,
+              background: WORDMARK_THEME.colors.background,
               border: "4px solid #0b0f14",
               boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.1)",
             }}
@@ -485,8 +504,8 @@ export const LinkedInInContext: Story = {
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        <BannerFrame spec={LINKEDIN} scale={scale} theme={BANNER_THEME} showGuides={false}>
-          <BannerArt spec={LINKEDIN} theme={BANNER_THEME} />
+        <BannerFrame spec={LINKEDIN} scale={scale} theme={WORDMARK_THEME} showGuides={false}>
+          <BannerArt spec={LINKEDIN} theme={WORDMARK_THEME} wordmark={WORDMARK_TEXT} />
         </BannerFrame>
         <div style={{ position: "relative", padding: "0 24px 24px" }}>
           <div
@@ -497,7 +516,7 @@ export const LinkedInInContext: Story = {
               width: 104,
               height: 104,
               borderRadius: 12,
-              background: BANNER_THEME.colors.background,
+              background: WORDMARK_THEME.colors.background,
               border: "4px solid #ffffff",
               boxShadow: "0 0 0 1px rgba(0,0,0,0.08)",
             }}
