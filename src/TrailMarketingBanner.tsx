@@ -221,6 +221,12 @@ export function TrailMarketingBanner({
   // LinkedIn fine-tuning: pull the city panel back left a touch.
   const isLinkedInProfile = variant === 'linkedinProfile' && !cityLeft;
   if (isLinkedInProfile) panelX -= Math.round(W * 0.03);
+  // X fine-tuning: nudge the city panel right (the card, pinned to the panel's
+  // near edge, rides along).
+  const isTwitterProfile = variant === 'twitterHeader' && !cityLeft;
+  if (isTwitterProfile) {
+    panelX = Math.min(W - panelSide - minMargin, panelX + Math.round(W * 0.04));
+  }
   // Indent the byline right so it tucks under the headline (profile surfaces).
   const indentByline =
     !cityLeft && (variant === 'linkedinProfile' || variant === 'twitterHeader');
