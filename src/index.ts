@@ -6,6 +6,8 @@ export { TextReveal } from './TextReveal';
 export { OpenTypeTextReveal } from './OpenTypeTextReveal';
 export { TrailCityDiagram } from './TrailCityDiagram';
 export type { TrailCityDiagramProps } from './TrailCityDiagram';
+export { TrailCityProgress } from './TrailCityProgress';
+export type { TrailCityProgressProps } from './TrailCityProgress';
 export { TrailCityBanner } from './TrailCityBanner';
 export type { TrailCityBannerProps, BannerVariant } from './TrailCityBanner';
 export { TrailMarketingBanner } from './TrailMarketingBanner';
