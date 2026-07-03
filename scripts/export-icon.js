@@ -39,10 +39,16 @@ function parseArgs(argv) {
     baseColor: null,
     gradient: null,
     rounded: true,
+    devRibbon: false,
+    devRibbonText: "dev",
+    devRibbonColor: null,
+    devRibbonTextColor: null,
+    devRibbonCorner: null,
   };
 
   const FILE_CITY_MARKS = ["P", "AI", "PAI", "lockup", "none"];
   const FILE_CITY_GRADIENTS = ["scatter", "vertical", "horizontal", "diagonal"];
+  const RIBBON_CORNERS = ["bottom-right", "bottom-left", "top-right", "top-left"];
 
   const normalized = [];
   for (let i = 0; i < argv.length; i++) {
@@ -160,6 +166,33 @@ function parseArgs(argv) {
         break;
       case "--no-rounded":
         options.rounded = false;
+        break;
+      // Dev-build ribbon (FileCityLogo only)
+      case "--dev-ribbon":
+        options.devRibbon = true;
+        break;
+      case "--dev-ribbon-text":
+        options.devRibbon = true;
+        options.devRibbonText = next ?? options.devRibbonText;
+        i++;
+        break;
+      case "--dev-ribbon-color":
+        options.devRibbon = true;
+        options.devRibbonColor = next ?? null;
+        i++;
+        break;
+      case "--dev-ribbon-text-color":
+        options.devRibbon = true;
+        options.devRibbonTextColor = next ?? null;
+        i++;
+        break;
+      case "--dev-ribbon-corner":
+        if (next && !RIBBON_CORNERS.includes(next)) {
+          throw new Error(`Invalid --dev-ribbon-corner: ${next}. Use one of ${RIBBON_CORNERS.join(", ")}.`);
+        }
+        options.devRibbon = true;
+        options.devRibbonCorner = next ?? null;
+        i++;
         break;
       default:
         throw new Error(`Unknown flag: ${token}`);
@@ -319,6 +352,14 @@ async function main() {
       gradient: options.gradient ?? undefined,
       rounded: options.rounded,
       opacity: options.opacity,
+      devRibbon: options.devRibbon
+        ? {
+            text: options.devRibbonText,
+            ...(options.devRibbonColor ? { color: options.devRibbonColor } : {}),
+            ...(options.devRibbonTextColor ? { textColor: options.devRibbonTextColor } : {}),
+            ...(options.devRibbonCorner ? { corner: options.devRibbonCorner } : {}),
+          }
+        : undefined,
     });
     let svgMarkup = renderToStaticMarkup(element);
 

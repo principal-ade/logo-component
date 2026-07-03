@@ -298,4 +298,61 @@ cp exports/web-icon-512-512.png  /Users/griever/Developer/messaging-server/landi
 
 ---
 
+### Auth Server (Next.js)
+
+**Location:** `/Users/griever/Developer/messaging-server/auth-server`
+
+**Current logo:** `FileCityLogo`, `mark=P`, Ice Tangerine Dark colors, navy
+panel `#0d274d`. Identical surface to the Landing Page above — same
+`realfavicongenerator` naming convention (all under `public/`) and the same
+near-black manifest theme. Reuses the exact same `web-*` exports.
+
+**In-app logo (also FileCityLogo):** unlike the Web App / Landing Page, this
+surface *also renders the logo inside the app* via the npm package. `src/app/
+page.tsx` (home) and `src/app/diagnostic/page.tsx` import `FileCityLogo` from
+`@principal-ai/logo-component` and render `mark="P"`, `background="transparent"`
+(floats on the page background), riding the active `landingPageTheme` via the
+`theme` prop. These were swapped from the old wireframe `<Logo>` and require:
+- `@principal-ai/logo-component` `>=0.1.4` (when `FileCityLogo` was added) —
+  bumped here `^0.1.3 → ^0.1.23`
+- `@principal-ade/industry-theme` bumped in lockstep `^0.1.3 → ^0.1.23`
+
+**Files updated** (all in `public/`, served directly):
+- `favicon.ico` - browser tab favicon (declared in `src/app/layout.tsx`
+  `metadata.icons`)
+- `favicon-16x16.png` / `favicon-32x32.png` - PNG favicons (layout metadata)
+- `favicon.png` (32x32) - legacy default-path favicon (refreshed for tidiness;
+  copy of the 32px PNG; not referenced in layout metadata)
+- `apple-touch-icon.png` (180x180) - iOS home screen (layout metadata)
+- `android-chrome-192x192.png` / `android-chrome-512x512.png` - PWA icons
+  (referenced from `public/manifest.json`, `purpose: "any maskable"`)
+
+**Export commands:** identical to the Web App section above — reuse the same
+`exports/web-*` files (no separate export run needed).
+
+**Copy commands:**
+```bash
+cp exports/web-favicon.ico       /Users/griever/Developer/messaging-server/auth-server/public/favicon.ico
+cp exports/web-favicon-16-16.png /Users/griever/Developer/messaging-server/auth-server/public/favicon-16x16.png
+cp exports/web-favicon-32-32.png /Users/griever/Developer/messaging-server/auth-server/public/favicon-32x32.png
+cp exports/web-favicon-32-32.png /Users/griever/Developer/messaging-server/auth-server/public/favicon.png
+cp exports/web-apple-180.png     /Users/griever/Developer/messaging-server/auth-server/public/apple-touch-icon.png
+cp exports/web-icon-192-192.png  /Users/griever/Developer/messaging-server/auth-server/public/android-chrome-192x192.png
+cp exports/web-icon-512-512.png  /Users/griever/Developer/messaging-server/auth-server/public/android-chrome-512x512.png
+```
+
+**Notes:**
+- Favicon/icon paths are declared in `src/app/layout.tsx` (`metadata.icons`) and
+  `public/manifest.json` — assets are referenced by these fixed names, so
+  refreshing the files in place is all that's needed.
+- **Theme colors are intentionally NOT navy here** (same as the Landing Page):
+  `manifest.json` keeps the near-black `theme_color: #1a1a1a` /
+  `background_color: #0a0a0a`. The navy `#0d274d` lives only inside the icon
+  panels. Left unchanged.
+- `public/logo.svg` and `public/principal-ade-icon.png` exist in `public/` but
+  are **not referenced anywhere** in the codebase (no `metadata`/`manifest`
+  pointer) — left untouched, same as the Landing Page surface.
+
+---
+
 <!-- Add new deployments below -->

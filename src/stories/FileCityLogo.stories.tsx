@@ -126,6 +126,70 @@ export const AICard: Story = {
   },
 };
 
+/** A macOS-style "dev build" ribbon — the diagonal banner Xcode / fastlane
+ *  badge stamp on an app icon to mark a non-release build. The band is
+ *  clipped to the rounded panel so its ends trim flush with the icon edge. */
+export const DevRibbon: Story = {
+  args: {
+    theme: defaultTheme,
+    mark: "P",
+    devRibbon: true,
+    width: 220,
+    height: 220,
+  },
+};
+
+/** The ribbon across each corner, so you can place it wherever it reads
+ *  best against the mark. */
+export const DevRibbonCorners: Story = {
+  render: () => (
+    <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
+      {(["bottom-right", "bottom-left", "top-right", "top-left"] as const).map((corner) => (
+        <div key={corner} style={{ textAlign: "center" }}>
+          <FileCityLogo
+            theme={defaultTheme}
+            mark="P"
+            devRibbon={{ corner }}
+            width={180}
+            height={180}
+          />
+          <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>{corner}</div>
+        </div>
+      ))}
+    </div>
+  ),
+};
+
+/** Custom text + colors — the banner takes any short label and its own
+ *  fill / text color. */
+export const DevRibbonStyles: Story = {
+  render: () => {
+    const Cell = ({
+      label,
+      devRibbon,
+    }: {
+      label: string;
+      devRibbon: React.ComponentProps<typeof FileCityLogo>["devRibbon"];
+    }) => (
+      <div style={{ textAlign: "center" }}>
+        <FileCityLogo theme={defaultTheme} mark="P" devRibbon={devRibbon} width={180} height={180} />
+        <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>{label}</div>
+      </div>
+    );
+    return (
+      <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
+        <Cell label="dev (default, primary)" devRibbon={true} />
+        <Cell label="beta, amber" devRibbon={{ text: "beta", color: "#f59e0b" }} />
+        <Cell label="alpha, red" devRibbon={{ text: "alpha", color: "#dc2626" }} />
+        <Cell
+          label="dev, slate band"
+          devRibbon={{ color: "#1f2937", textColor: "#e5e7eb" }}
+        />
+      </div>
+    );
+  },
+};
+
 /** Same P, tighter grid: dropping the margin ring from 1 → 0 packs the
  *  3×5 glyph into a 5×5 grid instead of 7×7, so each square is bigger. */
 export const BiggerSquares: Story = {

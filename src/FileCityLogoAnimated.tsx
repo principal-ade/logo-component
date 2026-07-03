@@ -94,7 +94,7 @@ export const FileCityLogoAnimated: React.FC<FileCityLogoAnimatedProps> = (props)
     props.theme?.colors.primary ??
     '#22d3ee';
 
-  const { cells, extras, bgColor, baseColor, rounded, opacity, mark, gloss } = useMemo(
+  const { cells, extras, ribbon, bgColor, baseColor, rounded, opacity, mark, gloss } = useMemo(
     () => computeFileCityLayout(props),
     // Re-derive only when an input that affects layout changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,6 +115,7 @@ export const FileCityLogoAnimated: React.FC<FileCityLogoAnimatedProps> = (props)
       props.opacity,
       props.gloss,
       props.squareRadius,
+      props.devRibbon,
     ],
   );
 
@@ -377,6 +378,7 @@ export const FileCityLogoAnimated: React.FC<FileCityLogoAnimatedProps> = (props)
       rounded={rounded}
       opacity={opacity}
       gloss={gloss}
+      ribbon={ribbon}
       label={fileCityLabel(mark)}
     >
       {/* Base pass: every cell. */}

@@ -40,6 +40,34 @@ export interface GlossConfig {
 /** `true` = faint top sheen (defaults), an object = tuned sheen, `false` = flat. */
 export type GlossOption = boolean | GlossConfig;
 
+/** Which corner the dev-build ribbon banner crosses. */
+export type RibbonCorner =
+  | 'bottom-right'
+  | 'bottom-left'
+  | 'top-right'
+  | 'top-left';
+
+/**
+ * A macOS-style "dev build" ribbon — the diagonal banner Xcode / `fastlane
+ * badge` stamp across an app icon's corner to mark an alpha/beta/dev build.
+ * The band is drawn inside the panel clip, so its ends are trimmed flush
+ * with the rounded icon edge (the native "clipped to the squircle" look).
+ */
+export interface DevRibbonConfig {
+  /** Banner text. Default `'dev'`. Rendered upper-cased, like the OS does. */
+  text?: string;
+  /** Corner the banner crosses. Default `'bottom-right'`. */
+  corner?: RibbonCorner;
+  /** Band fill. Defaults to the primary color. */
+  color?: string;
+  /** Text color. Default `'#ffffff'`. */
+  textColor?: string;
+}
+
+/** `false` (default) = no ribbon; `true` = a `dev` band in the primary
+ *  color across the bottom-right corner; an object tunes text / corner / colors. */
+export type DevRibbonOption = boolean | DevRibbonConfig;
+
 export interface FileCityLogoProps {
   width?: number;
   height?: number;
@@ -124,6 +152,14 @@ export interface FileCityLogoProps {
    * is nudged one column left to clear room for the card.
    */
   aiCard?: boolean;
+  /**
+   * Stamp a macOS-style "dev build" ribbon — a diagonal banner clipped to
+   * the icon's rounded corner, the way Xcode / `fastlane badge` mark
+   * alpha/beta/dev builds. `true` is a `dev` band across the bottom-right
+   * corner in the primary color; pass a {@link DevRibbonConfig} to set the
+   * text, corner, or colors.
+   */
+  devRibbon?: DevRibbonOption;
   opacity?: number;
 }
 
@@ -222,6 +258,75 @@ function mix(a: string, b: string, t: number): string {
 }
 
 /**
+ * Build the dev-build ribbon node, or `null` when disabled. A horizontal
+ * band rect + centered label, both rotated about a point inset from the
+ * chosen corner so the band runs parallel to that corner's diagonal. The
+ * rect is far longer than the panel; the panel's clip trims its ends flush
+ * with the rounded edge, giving the native "ribbon clipped to the icon" look.
+ */
+function buildDevRibbon(
+  option: DevRibbonOption,
+  primaryColor: string,
+): React.ReactNode | null {
+  if (!option) return null;
+  const cfg: Required<DevRibbonConfig> = {
+    text: 'dev',
+    corner: 'bottom-right',
+    color: primaryColor,
+    textColor: '#ffffff',
+    ...(option === true ? {} : option),
+  };
+  const label = cfg.text.toUpperCase();
+
+  // Center of the band, inset `D` from the corner along each axis, and the
+  // rotation that lays it parallel to the corner's diagonal. With the panel
+  // rounded, the band reads as a banner across the corner; its outward end
+  // is clipped by the squircle edge.
+  const D = 16; // band-center inset from the corner
+  const THICK = 22; // band thickness
+  const LEN = VIEW * 2; // overhang, trimmed by the panel clip
+  const CORNERS: Record<RibbonCorner, { cx: number; cy: number; rot: number }> = {
+    'bottom-right': { cx: VIEW - D, cy: VIEW - D, rot: -45 },
+    'bottom-left': { cx: D, cy: VIEW - D, rot: 45 },
+    'top-right': { cx: VIEW - D, cy: D, rot: 45 },
+    'top-left': { cx: D, cy: D, rot: -45 },
+  };
+  const { cx, cy, rot } = CORNERS[cfg.corner];
+  const fontSize = THICK * 0.5;
+
+  return (
+    <g
+      key="dev-ribbon"
+      transform={`rotate(${rot} ${cx} ${cy})`}
+      style={{ pointerEvents: 'none' }}
+    >
+      <rect
+        x={cx - LEN / 2}
+        y={cy - THICK / 2}
+        width={LEN}
+        height={THICK}
+        fill={cfg.color}
+        stroke={withAlpha('#000000', 0.18)}
+        strokeWidth={0.6}
+      />
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontFamily="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        fontWeight={700}
+        fontSize={fontSize}
+        letterSpacing="0.14em"
+        fill={cfg.textColor}
+      >
+        {label}
+      </text>
+    </g>
+  );
+}
+
+/**
  * One rendered grid square of the file-city mark, with everything needed
  * to draw it statically or animate it: its position, final fill / stroke,
  * whether it belongs to the letter, and a `weight` (how strongly it
@@ -253,6 +358,8 @@ export interface FileCityLayout {
   cells: FileCityCell[];
   /** Overlay nodes (trail path/dots, AI card) drawn above the grid. */
   extras: React.ReactNode[];
+  /** Dev-build ribbon node, drawn above everything inside the panel clip. */
+  ribbon: React.ReactNode | null;
   bgColor: string;
   baseColor: string;
   rounded: boolean;
@@ -286,6 +393,7 @@ export function computeFileCityLayout({
   opacity = 0.9,
   gloss = false,
   squareRadius = 0,
+  devRibbon = false,
 }: FileCityLogoProps): FileCityLayout {
   const primaryColor = primary ?? theme?.colors.primary ?? '#22d3ee';
   const accentColor = accent ?? theme?.colors.accent ?? primaryColor;
@@ -666,7 +774,9 @@ export function computeFileCityLayout({
     });
   }
 
-  return { cells: cellsOut, extras, bgColor, baseColor, rounded, opacity, mark, gloss };
+  const ribbon = buildDevRibbon(devRibbon, primaryColor);
+
+  return { cells: cellsOut, extras, ribbon, bgColor, baseColor, rounded, opacity, mark, gloss };
 }
 
 /** Accessible label for a given mark, shared by both components. */
@@ -690,8 +800,11 @@ export const FileCityPanel: React.FC<{
   opacity: number;
   label: string;
   gloss?: GlossOption;
+  /** Dev-build ribbon, drawn above the children and gloss but inside the
+   *  panel clip so its ends trim flush with the rounded edge. */
+  ribbon?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ width, height, bgColor, baseColor, rounded, opacity, label, gloss = false, children }) => {
+}> = ({ width, height, bgColor, baseColor, rounded, opacity, label, gloss = false, ribbon = null, children }) => {
   const uid = useId().replace(/:/g, '');
 
   // Normalize the gloss option → a config (or null when flat). `true`
@@ -765,6 +878,7 @@ export const FileCityPanel: React.FC<{
             )}
           </g>
         )}
+        {ribbon}
       </g>
       {/* Hairline tracing the panel edge so the icon stays defined against
           both light and dark dock backgrounds. Inset by half its width so
@@ -792,7 +906,7 @@ export const FileCityPanel: React.FC<{
  */
 export const FileCityLogo: React.FC<FileCityLogoProps> = (props) => {
   const { width = 150, height = 150 } = props;
-  const { cells, extras, bgColor, baseColor, rounded, opacity, mark, gloss } =
+  const { cells, extras, ribbon, bgColor, baseColor, rounded, opacity, mark, gloss } =
     computeFileCityLayout(props);
   return (
     <FileCityPanel
@@ -803,6 +917,7 @@ export const FileCityLogo: React.FC<FileCityLogoProps> = (props) => {
       rounded={rounded}
       opacity={opacity}
       gloss={gloss}
+      ribbon={ribbon}
       label={fileCityLabel(mark)}
     >
       {cells.map((cell) => (
